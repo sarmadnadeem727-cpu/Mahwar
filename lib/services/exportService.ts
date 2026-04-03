@@ -143,3 +143,84 @@ export function exportDCFToPDF(
 
   doc.save(`${ticker}_DCF_Report.pdf`);
 }
+
+export function exportFactbookToExcel(ticker: string, isData: Record<string, any>) {
+  const wb = XLSX.utils.book_new();
+  const sortedYears = Object.keys(isData).sort().reverse().slice(0, 4);
+  
+  const headers = ["Metric", ...sortedYears];
+  const ws = XLSX.utils.aoa_to_sheet([headers]);
+
+  const rev = ["Revenue", ...sortedYears.map(y => isData[y]?.totalRevenue || 0)];
+  const cogs = ["COGS", ...sortedYears.map(y => -(isData[y]?.costOfRevenue || 0))];
+  
+  XLSX.utils.sheet_add_aoa(ws, [rev, cogs], { origin: -1 });
+
+  // Live Formula for Gross Profit (Row 2 + Row 3)
+  const columns = ['B', 'C', 'D', 'E'];
+  const gpRow = [
+    "Gross Profit",
+    ...sortedYears.map((_, i) => {
+      const col = columns[i];
+      if (!col) return 0;
+      return { t: 'n', f: `${col}2+${col}3` };
+    })
+  ];
+  XLSX.utils.sheet_add_aoa(ws, [gpRow], { origin: -1 });
+
+  XLSX.utils.book_append_sheet(wb, ws, "Financials");
+  XLSX.writeFile(wb, `${ticker}_Factbook.xlsx`);
+}
+
+export function exportFactbookToPDF(globalData: any, sortedYears: string[]) {
+  const doc = new jsPDF("portrait");
+  
+  // Page 1: Exec Summary & Meta
+  doc.setFontSize(22);
+  doc.setTextColor(15, 23, 42); // Deep slate
+  doc.text("Mahwar Factbook", 14, 20);
+  
+  doc.setFontSize(14);
+  doc.setTextColor(16, 185, 129); // Emerald
+  doc.text(`${globalData?.name || 'Company'} (${globalData?.ticker || 'TICKER'})`, 14, 30);
+  
+  doc.setFontSize(11);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 38);
+  
+  const isCompliant = globalData?.shariah?.isCompliant;
+  doc.setFontSize(12);
+  doc.setTextColor(15, 23, 42);
+  doc.text("Shariah Compliance Status:", 14, 55);
+  doc.setTextColor(isCompliant ? 16 : 220, isCompliant ? 185 : 38, isCompliant ? 129 : 38);
+  doc.text(isCompliant ? "COMPLIANT" : "NON-COMPLIANT", 75, 55);
+
+  doc.setTextColor(15, 23, 42);
+  doc.text(`Cash Ratio: ${globalData?.shariah?.ratios?.cash || 0}%`, 14, 65);
+  doc.text(`Debt Ratio: ${globalData?.shariah?.ratios?.debt || 0}%`, 14, 73);
+
+  // Page 2: Financials
+  doc.addPage();
+  doc.setFontSize(18);
+  doc.setTextColor(15, 23, 42);
+  doc.text("3-Statement Financials", 14, 20);
+  
+  const isData = globalData?.financials?.income || {};
+  const incomeRows = [
+    ["Revenue", ...sortedYears.map(y => (isData[y]?.totalRevenue || 0).toFixed(1))],
+    ["COGS", ...sortedYears.map(y => (isData[y]?.costOfRevenue || 0).toFixed(1))],
+    ["Gross Profit", ...sortedYears.map(y => (isData[y]?.grossProfit || 0).toFixed(1))],
+    ["EBITDA", ...sortedYears.map(y => (isData[y]?.EBITDA || 0).toFixed(1))],
+    ["Net Income", ...sortedYears.map(y => (isData[y]?.netIncome || 0).toFixed(1))]
+  ];
+  
+  doc.autoTable({
+    startY: 30,
+    head: [["Income Statement", ...sortedYears]],
+    body: incomeRows,
+    theme: 'grid',
+    headStyles: { fillColor: [15, 23, 42] } // Navy
+  });
+
+  doc.save(`${globalData?.ticker || 'TICKER'}_Mahwar_Factbook.pdf`);
+}

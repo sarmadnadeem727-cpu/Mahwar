@@ -27,15 +27,15 @@
     --neg-bg: rgba(220, 38, 38, 0.08);
     
     /* Typography */
-    --text1: #0F172A;
-    --text2: #475569;
+    --text1: #0F172A; /* Updated: Deep Slate */
+    --text2: #334155; /* Updated: Higher Contrast Slate */
     --text3: #64748B;
     
     /* Borders & Dividers */
     --border: rgba(0, 0, 0, 0.08);
     --border-strong: rgba(0, 0, 0, 0.15);
 
-    /* Legacy mapping for parts of existing UI not yet fully migrated */
+    /* Legacy mapping */
     --bg-primary: var(--bg1);
     --bg-secondary: var(--bg2);
     --bg-tertiary: var(--bg3);
@@ -51,9 +51,7 @@
     --gold-sub: rgba(217, 119, 6, 0.12);
     --gold-glow: rgba(217, 119, 6, 0.1);
     --gold-border: rgba(217, 119, 6, 0.12);
-
     --emerald-bright: #10B981;
-
     --text4: #94A3B8;
     --warn: var(--amber);
     --warn-bg: var(--amber-dim);
@@ -64,10 +62,16 @@
   body {
     background-color: var(--void);
     color: var(--text1);
-    font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    /* Set Inter as primary UI font */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+  }
+
+  /* Support Cairo for Arabic explicitly via class */
+  .lang-ar {
+    font-family: 'Cairo', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -108,6 +112,7 @@
   }
 }
 
+
 @layer components {
   /* Professional Card Style */
   .terminal-card {
@@ -115,12 +120,12 @@
     border: 1px solid var(--border);
     border-radius: 8px;
     transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    /* Replaced heavy shadows with flat 1px border */
+    box-shadow: none; 
   }
   
   .terminal-card:hover {
     border-color: var(--accent-border);
-    box-shadow: 0 0 0 1px var(--accent-dim);
   }
   
   /* Input Field Terminal Style */
@@ -130,7 +135,7 @@
     color: var(--text1);
     padding: 0.75rem 1rem;
     border-radius: 6px;
-    font-family: var(--font-mono), monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 0.875rem;
     transition: all 0.2s;
   }
@@ -204,7 +209,7 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
-  
+
   /* Table Styles */
   .terminal-table {
     width: 100%;
@@ -221,14 +226,21 @@
     letter-spacing: 0.05em;
     padding: 0.75rem 1rem;
     text-align: left;
-    border-bottom: 1px solid var(--border-strong);
+    border-bottom: 2px solid var(--border-strong);
+    
+    /* Implement Sticky Headers */
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
   
   .terminal-table tbody td {
-    padding: 1rem;
+    padding: 0.5rem 1rem; /* Reduced padding for data density */
     border-bottom: 1px solid var(--border);
     color: var(--text1);
-    font-family: var(--font-mono), monospace;
+    /* Enforce JetBrains Mono & tabular nums for tables */
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
   }
   
   .terminal-table tbody tr:hover {
@@ -262,18 +274,6 @@
     font-size: 0.75rem;
     font-weight: 600;
   }
-}
-
-/* Global Effects */
-/* Noise Texture Overlay */
-.noise-overlay {
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.02;
-  mix-blend-mode: multiply;
-  pointer-events: none;
-  z-index: 9999;
 }
 
 /* Scrollbar Style */

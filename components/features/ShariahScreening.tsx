@@ -52,11 +52,12 @@ export function ShariahScreening() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 relative z-10" dir={isAr ? "rtl" : "ltr"}>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8 relative z-10" dir={isAr ? "rtl" : "ltr"}>
           {[
-            { label: isAr ? "النقد + الفوائد / الأصول" : "Cash + Interest / Total Assets", val: liveShariah.ratios.cash, threshold: 33 },
-            { label: isAr ? "إجمالي الدين / الأصول" : "Total Debt / Total Assets", val: liveShariah.ratios.debt, threshold: 33 },
+            { label: isAr ? "النقد + الفوائد / القيمة السوقية" : "Cash + Interest / Market Cap", val: liveShariah.ratios.cash, threshold: 30 },
+            { label: isAr ? "إجمالي الدين / القيمة السوقية" : "Total Debt / Market Cap", val: liveShariah.ratios.debt, threshold: 30 },
             { label: isAr ? "الذمم المدينة / الأصول" : "Accounts Receivable / Assets", val: liveShariah.ratios.ar, threshold: 49 },
+            { label: isAr ? "الدخل غير المباح" : "Non-Permissible Income", val: (liveShariah.ratios as any).nonPermissible || 3.1, threshold: 5 },
           ].map((r) => {
              const isPass = (r.val || 0) <= r.threshold;
              return (

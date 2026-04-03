@@ -5,6 +5,9 @@ import { motion } from "framer-motion";
 import { fmt } from "@/lib/fmt";
 import { useThreeStatement } from "@/hooks/useFinancialModels";
 import { useTerminalStore } from "@/store/useTerminalStore";
+import { useQuery } from "@tanstack/react-query";
+import { fetchInstitutionalData } from "@/lib/services/terminalService";
+import { exportFactbookToExcel, exportFactbookToPDF } from "@/lib/services/exportService";
 import { ModelButton } from "@/components/ui/ModelButton";
 import { FileText, CheckCircle2, AlertCircle, Calculator, Download, ChevronRight, BarChart3, Table as TableIcon } from "lucide-react";
 import { StatementCharts } from "./StatementCharts";
@@ -51,7 +54,16 @@ function StatementRow({ label, values, isHeader, isTotal, indent }: StatementRow
 
 export function ThreeStatementModel() {
   const { validate, data, loading } = useThreeStatement();
-  const { data: globalData, selectedTicker } = useTerminalStore();
+  const { selectedTicker } = useTerminalStore();
+
+  const { data: globalData, isLoading: fetchLoading } = useQuery({
+    queryKey: ['financialData', selectedTicker],
+    queryFn: () => {
+      const formatted = selectedTicker.endsWith(".SR") ? selectedTicker : `${selectedTicker}.SR`;
+      return fetchInstitutionalData(formatted);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const [activeStatement, setActiveStatement] = useState<"IS" | "BS" | "CF">("IS");
   const [viewMode, setViewMode] = useState<"table" | "charts">("table");
@@ -172,7 +184,7 @@ export function ThreeStatementModel() {
               </button>
             ))}
           </div>
-          <ModelButton label="Run Statement Audit" onClick={handleRunSync} loading={loading} />
+          <ModelButton label="Run Statement Audit" onClick={handleRunSync} loading={loading || fetchLoading} />
         </div>
       </header>
 
@@ -346,15 +358,22 @@ export function ThreeStatementModel() {
             </>
           )}
 
-          <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm">
-
-            <button className="w-full flex items-center justify-between group">
+          <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+            <button onClick={() => { if (globalData) exportFactbookToPDF(globalData, sortedYears) }} className="w-full flex items-center justify-between group">
               <div className="flex items-center gap-4">
                 <Download className="w-5 h-5 text-[var(--gold)]" />
                 <span className="text-[10px] font-bold text-[var(--text1)] uppercase tracking-[0.2em] group-hover:text-[var(--gold)] transition-colors">
-                  Export Factbook
+                  Export PDF Factbook
                 </span>
-
+              </div>
+              <ChevronRight className="w-4 h-4 text-[var(--text2)] group-hover:translate-x-2 transition-transform" />
+            </button>
+            <button onClick={() => { if (globalData) exportFactbookToExcel(selectedTicker, isData) }} className="w-full flex items-center justify-between group">
+              <div className="flex items-center gap-4">
+                <TableIcon className="w-5 h-5 text-[var(--emerald)]" />
+                <span className="text-[10px] font-bold text-[var(--text1)] uppercase tracking-[0.2em] group-hover:text-[var(--emerald)] transition-colors">
+                  Export Excel Factbook
+                </span>
               </div>
               <ChevronRight className="w-4 h-4 text-[var(--text2)] group-hover:translate-x-2 transition-transform" />
             </button>

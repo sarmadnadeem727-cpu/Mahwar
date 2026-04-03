@@ -7,14 +7,13 @@ import {
   BarChart3, Search, ArrowUpRight, ArrowDownRight,
   ChevronRight, Layers, Activity, Sparkles, ShieldCheck, Grid3X3, Calendar
 } from "lucide-react";
-import { DCFModel } from "@/components/models/DCFModel";
-import { LBOModel } from "@/components/models/LBOModel";
-import { ThreeStatementModel } from "@/components/models/ThreeStatementModel";
+import dynamic from 'next/dynamic';
+const DCFModel = dynamic(() => import("@/components/models/DCFModel").then((mod) => ({ default: mod.DCFModel })), { ssr: false });
+const LBOModel = dynamic(() => import("@/components/models/LBOModel").then((mod) => ({ default: mod.LBOModel })), { ssr: false });
+const ThreeStatementModel = dynamic(() => import("@/components/models/ThreeStatementModel").then((mod) => ({ default: mod.ThreeStatementModel })), { ssr: false });
 import { AIResearch } from "@/components/features/AIResearch";
 import { ShariahScreening } from "@/components/features/ShariahScreening";
 import { TickerSearch } from "@/components/features/TickerSearch";
-import { HistoricalChart } from "@/components/features/HistoricalChart";
-import { MetricCards } from "@/components/features/MetricCards";
 import { useTerminalStore } from "@/store/useTerminalStore";
 import { translations } from "@/lib/i18n";
 import { Globe, Percent } from "lucide-react";
@@ -310,55 +309,52 @@ export default function DashboardPage() {
               animate="visible"
               className="grid grid-cols-12 gap-6"
             >
-              <MetricCards />
-              <HistoricalChart />
-
-              {/* Feature Portal Cards */}
-              <motion.div variants={staggerItem} className="col-span-12 lg:col-span-4 flex flex-col gap-4">
-                {/* DCF */}
-                <div className="bg-[var(--bg1)] border border-[var(--border)] rounded-2xl p-5 relative overflow-hidden group cursor-pointer shadow-sm hover:border-[var(--gold)] transition-all" onClick={() => setPanel("DCF")}>
-
-
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-3">
-                      <BarChart3 className="w-4 h-4 text-[var(--gold)]" />
-                      <h3 className="text-xs font-semibold text-[var(--gold)] uppercase tracking-widest">{t.dcf_engine}</h3>
+              {/* Model Launcher */}
+              <motion.div variants={staggerItem} className="col-span-12">
+                <h2 className="text-xl font-bold text-[var(--text1)] mb-4">{isAr ? "منصة النماذج المالية" : "Financial Model Launcher"}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* DCF */}
+                  <div className="bg-[var(--bg1)] border border-[var(--border)] rounded-2xl p-5 relative overflow-hidden group cursor-pointer shadow-sm hover:border-[var(--accent)] transition-all" onClick={() => setPanel("DCF")}>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-3">
+                        <BarChart3 className="w-5 h-5 text-[var(--accent)]" />
+                        <h3 className="text-sm font-semibold text-[var(--accent)] uppercase tracking-widest">{t.dcf_engine}</h3>
+                      </div>
+                      <p className="text-xs text-[var(--text2)] leading-relaxed mb-6">{isAr ? "تقييم التدفقات النقدية السيادية مع تقييم WACC الآلي." : "Sovereign DCF with automated WACC and sensitivity analysis."}</p>
+                      <button className="flex items-center gap-2 text-xs font-bold text-[var(--accent)] group-hover:text-[var(--accent-dim)] transition-colors uppercase tracking-widest">
+                        {isAr ? "تهيئة" : "Initialize"} <ChevronRight className={`w-4 h-4 ${isAr ? "rotate-180" : ""}`} />
+                      </button>
                     </div>
-                    <p className="text-xs text-[var(--text2)] leading-relaxed mb-4">{isAr ? "تقييم التدفقات النقدية السيادية مع تقييم WACC الآلي." : "Sovereign DCF with automated WACC and sensitivity analysis."}</p>
-                    <button className="flex items-center gap-2 text-[10px] font-bold text-[var(--gold)] group-hover:text-[var(--gold-bright)] transition-colors uppercase tracking-widest">
-                      {isAr ? "تهيئة" : "Initialize"} <ChevronRight className={`w-3 h-3 ${isAr ? "rotate-180" : ""}`} />
-                    </button>
                   </div>
-                  <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-[var(--gold)] opacity-[0.03] blur-3xl rounded-full group-hover:opacity-10 transition-opacity" />
 
-                </div>
-
-                {/* LBO */}
-                <div className="terminal-card p-5 hover:border-[var(--accent-border)] hover:shadow-lg transition-all cursor-pointer group" onClick={() => setPanel("LBO")}>
-                  <div className="flex items-center gap-3 mb-3">
-                    <Layers className="w-4 h-4 text-[var(--amber)] group-hover:scale-110 transition-transform" />
-                    <h3 className="text-xs font-bold text-[var(--text1)] uppercase tracking-widest group-hover:text-[var(--amber)] transition-colors">{t.lbo_builder}</h3>
+                  {/* LBO */}
+                  <div className="bg-[var(--bg1)] border border-[var(--border)] rounded-2xl p-5 relative overflow-hidden group cursor-pointer shadow-sm hover:border-[var(--amber)] transition-all" onClick={() => setPanel("LBO")}>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Layers className="w-5 h-5 text-[var(--amber)]" />
+                        <h3 className="text-sm font-semibold text-[var(--amber)] uppercase tracking-widest">{t.lbo_builder}</h3>
+                      </div>
+                      <p className="text-xs text-[var(--text2)] leading-relaxed mb-6">{isAr ? "هياكل ديون متعددة المستويات وتصوير لعوائد الاستثمار IRR." : "Multi-tier debt structures and exit IRR visualizations."}</p>
+                      <button className="flex items-center gap-2 text-xs font-bold text-[var(--amber)] group-hover:text-[var(--gold-dim)] transition-colors uppercase tracking-widest">
+                        {isAr ? "بناء سيناريو" : "Build Scenario"} <ChevronRight className={`w-4 h-4 ${isAr ? "rotate-180" : ""}`} />
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-xs text-[var(--text2)] leading-relaxed mb-4">{isAr ? "هياكل ديون متعددة المستويات وتصوير لعوائد الاستثمار IRR." : "Multi-tier debt structures and exit IRR visualizations."}</p>
-                  <button className="flex items-center gap-2 text-[10px] font-bold text-[var(--amber)] group-hover:text-[var(--amber-dim)] transition-colors uppercase tracking-widest">
-                    {isAr ? "بناء سيناريو" : "Build Scenario"} <ChevronRight className={`w-3 h-3 ${isAr ? "rotate-180" : ""}`} />
-                  </button>
-                </div>
 
-                {/* 3-Statement */}
-                <div className="bg-[var(--bg1)] border border-[var(--border)] rounded-2xl p-5 hover:border-[var(--border-gold)] hover:shadow-lg transition-all cursor-pointer group" onClick={() => setPanel("FS")}>
-                  <div className="flex items-center gap-3 mb-3">
-                    <Activity className="w-4 h-4 text-[var(--text2)] group-hover:text-[var(--gold)] transition-colors" />
-                    <h3 className="text-xs font-bold text-[var(--text1)] uppercase tracking-widest group-hover:text-[var(--gold)] transition-colors">{t.three_statement}</h3>
+                  {/* 3-Statement */}
+                  <div className="bg-[var(--bg1)] border border-[var(--border)] rounded-2xl p-5 relative overflow-hidden group cursor-pointer shadow-sm hover:border-[var(--pos)] transition-all" onClick={() => setPanel("FS")}>
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Activity className="w-5 h-5 text-[var(--pos)]" />
+                        <h3 className="text-sm font-semibold text-[var(--pos)] uppercase tracking-widest">{t.three_statement}</h3>
+                      </div>
+                      <p className="text-xs text-[var(--text2)] leading-relaxed mb-6">{isAr ? "القائمة الثلاثية مع معالجات الزكاة السعودية IFRS/GAAP." : "IS · BS · CF with Saudi GAAP/IFRS Zakat treatments."}</p>
+                      <button className="flex items-center gap-2 text-xs font-bold text-[var(--pos)] group-hover:text-[var(--pos-bg)] transition-colors uppercase tracking-widest">
+                        {isAr ? "بدء المراجعة" : "Launch Audit"} <ChevronRight className={`w-4 h-4 ${isAr ? "rotate-180" : ""}`} />
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-xs text-[var(--text3)] leading-relaxed mb-4">{isAr ? "القائمة الثلاثية مع معالجات الزكاة السعودية IFRS/GAAP." : "IS · BS · CF with Saudi GAAP/IFRS Zakat treatments."}</p>
-
-                  <button className="flex items-center gap-2 text-[10px] font-bold text-[var(--text3)] group-hover:text-[var(--gold)] transition-colors uppercase tracking-widest">
-                    {isAr ? "بدء المراجعة" : "Launch Audit"} <ChevronRight className={`w-3 h-3 ${isAr ? "rotate-180" : ""}`} />
-                  </button>
-
                 </div>
-
               </motion.div>
 
               {/* Research Feature Banners */}
