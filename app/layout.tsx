@@ -45,10 +45,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} ${cairo.variable} ${cormorant.variable}`}>
       <body className="bg-[var(--void)] text-[var(--text1)] min-h-screen">
-        <div className="noise-overlay" />
         <LoadingScreen />
         {children}
-
       </body>
     </html>
   );

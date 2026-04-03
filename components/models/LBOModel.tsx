@@ -1,45 +1,19 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { Briefcase, CreditCard, DollarSign } from "lucide-react";
+import React, { useState, useMemo, useCallback } from "react";
+import { motion } from "framer-motion";
+import { Briefcase, CreditCard, DollarSign, Calculator, ArrowRightLeft, ChevronRight } from "lucide-react";
 import { runLbo, DebtTranche, LboYearInput } from "@/lib/finance/lbo";
 import { fmt } from "@/lib/fmt";
 import { useTerminalStore } from "@/store/useTerminalStore";
+import { useQuery } from "@tanstack/react-query";
+import { fetchInstitutionalData } from "@/lib/services/terminalService";
+import { useFX } from "@/hooks/useFX";
 
 const DEFAULT_TRANCHES: DebtTranche[] = [
-  {
-    name: "Senior Term Loan A",
-    type: "SENIOR",
-    openingBalance: 400,
-    commitment: 400,
-    spreadBps: 350,
-    benchmarkRate: 0.055,
-    amortPctPa: 0.05,
-    cashSweepPct: 0.7,
-    seniority: 1,
-  },
-  {
-    name: "Senior Term Loan B",
-    type: "SENIOR",
-    openingBalance: 200,
-    commitment: 200,
-    spreadBps: 450,
-    benchmarkRate: 0.055,
-    amortPctPa: 0.01,
-    cashSweepPct: 0.2,
-    seniority: 2,
-  },
-  {
-    name: "Mezzanine Note",
-    type: "MEZZ",
-    openingBalance: 150,
-    commitment: 150,
-    spreadBps: 800,
-    benchmarkRate: 0.055,
-    amortPctPa: 0,
-    cashSweepPct: 0,
-    seniority: 3,
-  },
+  { name: "Senior Term Loan A", type: "SENIOR", openingBalance: 400, commitment: 400, spreadBps: 350, benchmarkRate: 0.055, amortPctPa: 0.05, cashSweepPct: 0.7, seniority: 1 },
+  { name: "Senior Term Loan B", type: "SENIOR", openingBalance: 200, commitment: 200, spreadBps: 450, benchmarkRate: 0.055, amortPctPa: 0.01, cashSweepPct: 0.2, seniority: 2 },
+  { name: "Mezzanine Note", type: "MEZZ", openingBalance: 150, commitment: 150, spreadBps: 800, benchmarkRate: 0.055, amortPctPa: 0, cashSweepPct: 0, seniority: 3 },
 ];
 
 const DEFAULT_YEARS_LBO: LboYearInput[] = [
@@ -51,68 +25,26 @@ const DEFAULT_YEARS_LBO: LboYearInput[] = [
 ];
 
 export function LBOModel() {
-  const { data: globalData } = useTerminalStore();
+  const { selectedTicker, currency } = useTerminalStore();
+  const { convert } = useFX();
   const [tranches, setTranches] = useState<DebtTranche[]>(DEFAULT_TRANCHES);
   
-  // Model state grouped to minimize effects
+  const { data: globalData, isLoading: fetchLoading } = useQuery({
+    queryKey: ['financialData', selectedTicker],
+    queryFn: () => fetchInstitutionalData(selectedTicker),
+    staleTime: 5 * 60 * 1000,
+  });
+
   const [modelState, setModelState] = useState({
     years: DEFAULT_YEARS_LBO,
     entryEv: 1200,
     exitMultiple: 8.5
   });
 
-  const hasSyncedRef = useRef(false);
-
-  // Auto-populate from global stock data
-  useEffect(() => {
-    if (globalData && !hasSyncedRef.current) {
-      const timer = setTimeout(() => {
-        const income = globalData.financials.income || {};
-        const sortedYears = Object.keys(income).sort().reverse();
-        const latest = (income[sortedYears[0]] || {}) as Record<string, number | string>;
-        
-        const newEntryEv = Math.round((globalData.mktCap || 1200000000) / 1000000);
-        const revenueGrowth = typeof globalData.metrics.revenueGrowth === 'string' ? parseFloat(globalData.metrics.revenueGrowth) : (globalData.metrics.revenueGrowth || 8);
-        const ebitdaMargin = typeof globalData.metrics.ebitdaMargin === 'string' ? parseFloat(globalData.metrics.ebitdaMargin) : (globalData.metrics.ebitdaMargin || 25);
-        
-        const rawRevenue = latest.totalRevenue;
-        const latestRevenue = typeof rawRevenue === 'string' ? parseFloat(rawRevenue) : (typeof rawRevenue === 'number' ? rawRevenue : 1000);
-        
-        const pe = typeof globalData.metrics.pe === 'string' ? parseFloat(globalData.metrics.pe) : (globalData.metrics.pe || 15);
-
-        const newYears: LboYearInput[] = Array.from({ length: 5 }).map((_, i) => {
-          const growth = 1 + (revenueGrowth / 100) * (i + 1);
-          return {
-            yearIndex: i + 1,
-            year: 2025 + i,
-            revenue: Math.round(latestRevenue * growth),
-            ebitdaMargin: ebitdaMargin / 100,
-            capex: Math.round(latestRevenue * 0.05),
-            deltaNwc: 10,
-            taxesZakat: 25
-          };
-        });
-
-        setModelState({
-          years: newYears,
-          entryEv: newEntryEv,
-          exitMultiple: Math.round(pe / 2) || 8.5
-        });
-        
-        hasSyncedRef.current = true;
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-  }, [globalData]);
-
   const result = useMemo(
     () => runLbo(tranches, modelState.years, modelState.entryEv, 200, 20, 5, modelState.exitMultiple),
     [tranches, modelState]
   );
-
-  const setExitMultiple = useCallback((m: number) => {
-    setModelState(prev => ({ ...prev, exitMultiple: m }));
-  }, []);
 
   const updateTranche = (index: number, key: keyof DebtTranche, val: number) => {
     setTranches(prev => {
@@ -123,297 +55,157 @@ export function LBOModel() {
   };
 
   return (
-    <div className="flex flex-col gap-10 p-8 pb-32 max-w-[1600px] mx-auto text-[var(--text1)] bg-[var(--void)]">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-8 bg-[var(--bg1)] border border-[var(--border)] p-10 rounded-[2.5rem] shadow-[0_15px_40px_rgba(14,124,105,0.05)] relative overflow-hidden group">
-
-
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03]" />
-        <div className="flex items-center gap-6 relative z-10">
-          <div className="w-16 h-16 rounded-2xl bg-[var(--bg2)] flex items-center justify-center border border-[var(--border)] shadow-sm">
-            <Briefcase className="text-[var(--emerald)] w-8 h-8" />
+    <motion.div 
+      className="flex flex-col gap-8 text-[#F8FAFC]"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#0F172A] border border-[#334155] p-8">
+        <div className="flex items-center gap-6">
+          <div className="w-12 h-12 bg-[#1E293B] flex items-center justify-center border border-[#334155]">
+            <Briefcase className="text-[#10B981] w-6 h-6" />
           </div>
           <div>
-            <h1 className="font-serif text-4xl font-bold tracking-tight text-[var(--text1)] mb-1 leading-tight">
-              Sovereign LBO Engine
-            </h1>
-            <p className="text-[var(--text3)] text-xs font-ibm-plex-mono font-bold uppercase tracking-[0.2em] opacity-80">
-              Transaction Structuring • Debt Sculpting • Returns Analysis
+            <h1 className="font-mono text-2xl font-bold uppercase tracking-tighter text-[#F8FAFC]">Sovereign LBO Engine</h1>
+            <p className="text-[#64748B] text-[10px] font-mono tracking-widest uppercase">
+              {selectedTicker.replace(".SR", "")} • {currency} • TRANSACTION_LEVERAGE_SIMULATOR
             </p>
           </div>
         </div>
 
-
-        <div className="flex items-center gap-8 bg-[var(--bg2)] p-6 rounded-2xl border border-[var(--border)] relative z-10 shadow-inner">
-          <div className="text-center px-8 border-r border-[var(--border)]">
-            <div className="text-[10px] text-[var(--text3)] uppercase tracking-[0.25em] mb-2 font-ibm-plex-mono font-bold">Entry Leverage</div>
-            <div className="text-4xl font-mono font-bold text-[var(--navy)] tracking-tighter">{result.sourcesUses.entryLeverage.toFixed(1)}x</div>
+        <div className="flex items-center gap-12 bg-[#1E293B] p-6 border border-[#334155]">
+          <div className="text-right">
+            <div className="text-[9px] text-[#64748B] uppercase tracking-[0.2em] mb-1 font-bold">Entry Leverage</div>
+            <div className="text-3xl font-mono font-bold text-[#F8FAFC] tracking-tighter">{result.sourcesUses.entryLeverage.toFixed(1)}x</div>
           </div>
-          <div className="text-center px-8">
-            <div className="text-[10px] text-[var(--text3)] uppercase tracking-[0.25em] mb-2 font-ibm-plex-mono font-bold">Projected IRR</div>
-            <div className="text-4xl font-mono font-bold text-[var(--emerald)] tracking-tighter">{result.irr}%</div>
+          <div className="w-[1px] h-10 bg-[#334155]" />
+          <div className="text-right">
+            <div className="text-[9px] text-[#64748B] uppercase tracking-[0.2em] mb-1 font-bold">Projected IRR</div>
+            <div className="text-3xl font-mono font-bold text-[#10B981] tracking-tighter">{result.irr}%</div>
           </div>
         </div>
-
-
       </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        <section className="xl:col-span-8 flex flex-col gap-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-[var(--bg1)] border border-[var(--border)] rounded-2xl p-8 shadow-[0_10px_30px_rgba(14,124,105,0.03)]">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--navy)] mb-10 flex items-center gap-3">
-                <DollarSign className="w-5 h-5 text-[var(--emerald)]" /> Transaction Uses
-              </h3>
-              <div className="space-y-6">
-                <div className="flex justify-between items-center text-sm py-4 border-b border-[var(--border)]">
-                  <span className="text-[var(--text3)] uppercase tracking-wider text-[10px] font-bold">Purchase of Equity (EV)</span>
-                  <span className="font-mono text-[var(--text1)] font-bold">{fmt.large(result.sourcesUses.entryEv)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm py-4 border-b border-[var(--border)]">
-                  <span className="text-[var(--text3)] uppercase tracking-wider text-[10px] font-bold">Transaction Fees</span>
-                  <span className="font-mono text-[var(--text1)] font-bold">{fmt.large(result.sourcesUses.transactionFees)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm pt-6 font-bold text-[var(--text1)] uppercase tracking-widest">
-                  <span className="text-xs">Total Transaction Uses</span>
-                  <span className="font-mono text-2xl text-[var(--navy)] font-bold">{fmt.large(result.sourcesUses.totalUses)}</span>
-                </div>
-              </div>
-            </div>
-
-
-
-            <div className="bg-[var(--bg1)] border border-[var(--border)] rounded-2xl p-8 shadow-[0_10px_30px_rgba(14,124,105,0.03)] border-l-4 border-l-[var(--emerald)]">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--navy)] mb-10 flex items-center gap-3">
-                <CreditCard className="w-5 h-5 text-[var(--emerald)]" /> Transaction Sources
-              </h3>
-              <div className="space-y-6">
-                <div className="flex justify-between items-center text-sm py-4 border-b border-[var(--border)]">
-                  <span className="text-[var(--text3)] uppercase tracking-wider text-[10px] font-bold">New Tranche Debt</span>
-                  <span className="font-mono text-[var(--text1)] font-bold">{fmt.large(result.sourcesUses.totalDebt)}</span>
-                </div>
-                <div className="flex justify-between items-center text-sm py-4 border-b border-[var(--border)]">
-                  <span className="text-[var(--text3)] uppercase tracking-wider text-[10px] font-bold">Sponsor Equity Check</span>
-                  <span className="font-mono text-[var(--navy)] font-bold">{fmt.large(result.sourcesUses.equityCheck)}</span>
-                </div>
-                <div className="flex justify-between items-center text-[10px] pt-6 font-bold text-[var(--text1)] uppercase tracking-[0.25em]">
-                  <span>Equity Contribution %</span>
-                  <span className="font-mono text-base font-bold text-[var(--emerald)]">{result.sourcesUses.entryEquityPct.toFixed(1)}%</span>
-                </div>
-              </div>
-            </div>
-
-
-          </div>
-
-          {/* Editable Debt Tranches */}
-          <div className="bg-[var(--bg1)] border border-[var(--border)] rounded-2xl p-8 shadow-sm">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--navy)] mb-6 flex items-center gap-3">
-              <CreditCard className="w-5 h-5 text-[var(--accent)]" /> Debt Capital Structure
+      <div className="grid grid-cols-12 gap-8">
+        <aside className="col-span-12 xl:col-span-4 space-y-6">
+          <div className="bg-[#0F172A] border border-[#334155] p-6">
+            <h3 className="text-[10px] font-bold text-[#64748B] uppercase tracking-[0.4em] mb-8 flex items-center gap-3">
+              <Calculator className="w-4 h-4 text-[#F59E0B]" />
+              Deal Architecture
             </h3>
-            
-            <div className="space-y-4">
-              {tranches.map((t, i) => (
-                <div key={i} className="flex flex-wrap items-center justify-between gap-4 p-4 border border-[var(--border)] rounded-xl bg-[var(--bg2)]">
-                  <div className="min-w-[150px]">
-                    <div className="text-[11px] font-bold uppercase tracking-widest text-[var(--text1)]">{t.name}</div>
-                    <div className="text-[9px] text-[var(--text3)] uppercase tracking-wider">{t.type}</div>
-                  </div>
-                  
-                  <div className="flex items-center gap-6">
-                    <div>
-                      <label className="block text-[9px] uppercase tracking-wider text-[var(--text3)] mb-1">Amount ($M)</label>
-                      <input 
-                        type="number" 
-                        value={t.commitment} 
-                        onChange={e => updateTranche(i, 'commitment', parseFloat(e.target.value) || 0)}
-                        className="w-24 bg-[var(--bg1)] border border-[var(--border)] rounded px-2 py-1 text-xs font-mono text-[var(--text1)] outline-none focus:border-[var(--accent)]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[9px] uppercase tracking-wider text-[var(--text3)] mb-1">Spread (bps)</label>
-                      <input 
-                        type="number" 
-                        value={t.spreadBps} 
-                        onChange={e => updateTranche(i, 'spreadBps', parseFloat(e.target.value) || 0)}
-                        className="w-20 bg-[var(--bg1)] border border-[var(--border)] rounded px-2 py-1 text-xs font-mono text-[var(--text1)] outline-none focus:border-[var(--accent)]"
-                      />
-                    </div>
-                  </div>
+            <div className="space-y-6">
+                <div className="flex justify-between border-b border-[#334155] pb-3">
+                   <span className="text-[9px] text-[#F8FAFC] font-bold uppercase">Entry EV</span>
+                   <span className="font-mono text-xs text-[#F8FAFC]">{fmt.accounting(convert(result.sourcesUses.entryEv, 'SAR', currency))}</span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-[0_15px_40px_rgba(14,124,105,0.03)]">
-            <div className="bg-[var(--bg2)] p-6 border-b border-[var(--border)]">
-              <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-[var(--navy)]">
-                Debt Amortization & Cash Sweep Schedule
-              </h3>
-            </div>
-
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-[var(--bg2)] text-[var(--navy)] font-mono text-[9px] uppercase tracking-widest">
-                    <th className="py-4 px-8 border-r border-[var(--border)]">Line Item</th>
-                    {result.years.map(y => (
-                      <th key={y.year} className="py-4 px-6 border-r border-[var(--border)] last:border-0 text-right">
-                        FY {y.year}E
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--border)] font-mono text-xs text-[var(--text1)]">
-                  <tr className="hover:bg-[var(--bg3)] transition-colors">
-                    <td className="py-5 px-8 text-[var(--text1)] font-sans font-bold uppercase tracking-wider border-r border-[var(--border)]">
-                      EBITDA
-                    </td>
-
-                    {result.years.map((y, i) => (
-                      <td key={i} className="py-5 px-6 text-right border-r border-[var(--border)] last:border-0 font-bold">
-                        {y.ebitda.toFixed(1)}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="hover:bg-[var(--bg3)] transition-colors">
-                    <td className="py-5 px-8 text-[var(--text3)] italic font-sans border-r border-[var(--border)] font-bold">
-                      CFADS (Cash Flow Available for Debt Service)
-                    </td>
-                    {result.years.map((y, i) => (
-                      <td key={i} className="py-5 px-6 text-right text-[var(--positive)] font-bold border-r border-[var(--border)] last:border-0">
-                        {y.cfads.toFixed(1)}
-                      </td>
-                    ))}
-                  </tr>
-                  <tr className="bg-[var(--bg2)] font-bold text-[var(--text1)]">
-                    <td className="py-5 px-8 uppercase tracking-widest font-sans border-r border-[var(--border)] font-semibold">
-                      Closing Debt Balance
-                    </td>
-                    {result.years.map((y, i) => (
-                      <td key={i} className="py-5 px-6 text-right border-r border-[var(--border)] last:border-0 text-base font-bold text-[var(--navy)]">
-                        {y.debtClose.toFixed(1)}
-                      </td>
-                    ))}
-                  </tr>
-
-
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        <aside className="xl:col-span-4 flex flex-col gap-8">
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-3xl p-8 text-center shadow-[0_30px_70px_rgba(0,0,0,0.5)] relative overflow-hidden group">
-            <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--emerald)] to-transparent opacity-80" />
-            <div className="absolute -right-20 -top-20 w-64 h-64 bg-[var(--emerald)] opacity-[0.05] blur-[100px] rounded-full group-hover:opacity-[0.08] transition-opacity duration-1000" />
-
-            <span className="text-[10px] font-mono tracking-[0.5em] text-[var(--emerald)] uppercase mb-8 block font-bold">
-              Institutional Performance
-            </span>
-
-            <div className="flex items-center justify-center gap-12 my-12 relative z-10 font-bold">
-              <div className="flex flex-col items-center">
-                <div className="text-6xl font-bold text-[var(--text1)] tracking-tighter mb-2 font-ibm-plex-mono">{result.moic}x</div>
-                <div className="text-[10px] text-[var(--text3)] uppercase font-bold tracking-[0.25em]">Exit MOIC</div>
-              </div>
-              <div className="w-[1px] h-20 bg-[var(--border)]" />
-              <div className="flex flex-col items-center">
-                <div className="text-6xl font-bold text-[var(--emerald)] tracking-tighter mb-2 font-ibm-plex-mono">{result.irr}%</div>
-                <div className="text-[10px] text-[var(--text3)] uppercase font-bold tracking-[0.25em]">Projected IRR</div>
-              </div>
-            </div>
-
-
-            <div className="space-y-6 text-left border-t border-[var(--border)] pt-8">
-              <div>
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-[11px] text-[var(--text3)] uppercase tracking-widest font-bold">Exit Multiple</span>
-                  <span className="font-mono text-[var(--emerald)] text-lg font-bold">{modelState.exitMultiple}x</span>
+                <div className="flex justify-between border-b border-[#334155] pb-3">
+                   <span className="text-[9px] text-[#94A3B8] font-bold uppercase">Equity Check</span>
+                   <span className="font-mono text-xs text-[#10B981]">{fmt.accounting(convert(result.sourcesUses.equityCheck, 'SAR', currency))}</span>
                 </div>
-                <input
-                  type="range"
-                  min="5"
-                  max="15"
-                  step="0.5"
-                  value={modelState.exitMultiple}
-                  onChange={(e) => setExitMultiple(parseFloat(e.target.value))}
-                  className="w-full h-1 bg-[var(--border)] rounded-lg appearance-none cursor-pointer accent-[var(--emerald)]"
-                />
-              </div>
-              <div className="flex justify-between items-center text-sm font-bold pt-6 border-t border-[var(--border)]">
-                <span className="text-[var(--text1)] uppercase tracking-widest text-[10px] font-bold">Proj. Equity Exit Value</span>
-                <span className="text-[var(--emerald)] font-mono text-xl">{fmt.large(result.exitEquity)}</span>
-              </div>
+                <div className="pt-4">
+                   <label className="text-[10px] font-bold text-[#64748B] uppercase block mb-3">Exit Multiple: <span className="text-[#10B981]">{modelState.exitMultiple}x</span></label>
+                   <input type="range" min="5" max="15" step="0.5" value={modelState.exitMultiple} 
+                     onChange={(e) => setModelState(prev => ({ ...prev, exitMultiple: parseFloat(e.target.value) }))}
+                     className="w-full h-1 bg-[#334155] rounded-none appearance-none cursor-pointer accent-[#10B981]"
+                   />
+                </div>
             </div>
-
           </div>
 
-          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-2xl p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
-            <h3 className="text-[10px] font-bold uppercase tracking-[0.25em] text-[var(--emerald)] mb-8 border-b border-[var(--border)] pb-4">
-              Returns Sensitivity Matrix
+          <div className="bg-[#0F172A] border border-[#334155] p-6">
+             <h3 className="text-[10px] font-bold text-[#64748B] uppercase tracking-[0.4em] mb-6 flex items-center gap-3">
+              <CreditCard className="w-4 h-4 text-[#10B981]" />
+              Debt Tranches
             </h3>
-
-
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-[var(--bg2)]">
-                    <th className="p-3 border border-[var(--border)] text-[8px] text-[var(--text3)] uppercase tracking-tighter w-16 text-left font-bold">
-                      Exit Yr<br />Multiple →
-                    </th>
-                    {result.exitMultipleRange.map(m => (
-                      <th key={m} className="p-3 border border-[var(--border)] font-mono text-[9px] text-[var(--text1)] font-bold">
-                        {m}x
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {result.returnsSensitivity.map((row, ri) => (
-                    <tr key={ri}>
-                      <td className="p-4 border border-[var(--border)] font-mono text-[10px] font-bold text-[var(--text1)] bg-[var(--bg2)] text-left">
-                        Yr {row.exitYear}
-                      </td>
-
-                      {row.irrs.map((val, ci) => {
-                        const isHigh = val > 25;
-                        const isMid = val > 15;
-                        const cellStyle = isHigh
-                          ? { backgroundColor: "rgba(14, 124, 105, 0.15)", color: "var(--emerald)" }
-                          : isMid
-                          ? { backgroundColor: "rgba(14, 124, 105, 0.05)", color: "var(--navy)" }
-                          : { backgroundColor: "rgba(255, 90, 90, 0.05)", color: "var(--neg)" };
-
-                        return (
-                          <td
-                            key={ci}
-                            className="p-4 border border-[var(--border)] font-mono text-[11px] text-center font-bold"
-                            style={cellStyle}
-                          >
-                            {val}%
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-
-                </tbody>
-              </table>
-            </div>
-            <div className="flex gap-4 mt-6 text-[8px] text-[var(--text2)] uppercase tracking-widest font-bold">
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> &gt; 25% IRR
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#C9A84C]" /> &gt; 15% IRR
-              </div>
+            <div className="space-y-3">
+               {tranches.map((t, i) => (
+                 <div key={i} className="p-4 bg-[#1E293B] border border-[#334155]">
+                    <div className="flex justify-between mb-3">
+                       <span className="text-[10px] font-bold uppercase text-[#F8FAFC]">{t.name}</span>
+                       <span className="text-[8px] bg-[#334155] px-1 text-[#94A3B8]">{t.type}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                       <div>
+                          <label className="text-[8px] uppercase text-[#64748B] block mb-1">Commitment ({currency})</label>
+                          <input type="number" value={t.commitment} onChange={e => updateTranche(i, 'commitment', parseFloat(e.target.value) || 0)}
+                            className="w-full bg-[#0F172A] border border-[#334155] text-xs font-mono p-1 text-[#F8FAFC]"
+                          />
+                       </div>
+                       <div>
+                          <label className="text-[8px] uppercase text-[#64748B] block mb-1">Spread (bps)</label>
+                          <input type="number" value={t.spreadBps} onChange={e => updateTranche(i, 'spreadBps', parseFloat(e.target.value) || 0)}
+                            className="w-full bg-[#0F172A] border border-[#334155] text-xs font-mono p-1 text-[#F8FAFC]"
+                          />
+                       </div>
+                    </div>
+                 </div>
+               ))}
             </div>
           </div>
         </aside>
+
+        <main className="col-span-12 xl:col-span-8 space-y-8">
+           <div className="bg-[#0F172A] border border-[#334155] overflow-hidden">
+             <table className="terminal-table">
+               <thead>
+                 <tr>
+                    <th className="w-1/3">Debt Service Schedule</th>
+                    {result.years.map(y => <th key={y.year} className="text-right">FY {y.year}E</th>)}
+                 </tr>
+               </thead>
+               <tbody>
+                  <TableRow label="EBITDA" values={result.years.map(y => fmt.accounting(convert(y.ebitda, 'SAR', currency)))} />
+                  <TableRow label="CFADS" values={result.years.map(y => fmt.accounting(convert(y.cfads, 'SAR', currency)))} isSub />
+                  <TableRow label="Mandatory Amortization" values={result.years.map(y => `(${fmt.accounting(convert(y.mandatoryAmort, 'SAR', currency))})`)} isSub />
+                  <TableRow label="Cash Sweep" values={result.years.map(y => `(${fmt.accounting(convert(y.cashSweep, 'SAR', currency))})`)} isSub />
+                  <TableRow label="Closing Debt Balance" values={result.years.map(y => fmt.accounting(convert(y.debtClose, 'SAR', currency)))} isTotal />
+               </tbody>
+             </table>
+           </div>
+
+           <div className="bg-[#0F172A] border border-[#334155] p-8">
+               <h3 className="text-[10px] font-bold text-[#64748B] uppercase tracking-[0.4em] mb-8">Returns Sensitivity (IRR %)</h3>
+               <div className="overflow-x-auto">
+                 <table className="w-full text-center border-collapse text-[10px] font-mono">
+                    <thead>
+                      <tr className="bg-[#1E293B]">
+                        <th className="p-3 border border-[#334155] text-left text-[#94A3B8]">Year \ Exit Mult</th>
+                        {result.exitMultipleRange.map(m => <th key={m} className="p-3 border border-[#334155] text-[#F8FAFC]">{m}x</th>)}
+                      </tr>
+                    </thead>
+                    <tbody>
+                       {result.returnsSensitivity.map((row, ri) => (
+                         <tr key={ri} className="hover:bg-[#1E293B]">
+                            <td className="p-3 border border-[#334155] font-bold text-[#94A3B8] text-left">Yr {row.exitYear}</td>
+                            {row.irrs.map((irr, ci) => (
+                              <td key={ci} className={`p-3 border border-[#334155] ${irr > 20 ? 'text-[#10B981]' : 'text-red-400'}`}>
+                                {irr}%
+                              </td>
+                            ))}
+                         </tr>
+                       ))}
+                    </tbody>
+                 </table>
+               </div>
+           </div>
+        </main>
       </div>
-    </div>
+    </motion.div>
+  );
+}
+
+function TableRow({ label, values, isSub, isTotal }: any) {
+  return (
+    <tr className={`border-b border-[#334155] transition-colors hover:bg-[#1E293B] ${isTotal ? 'bg-[#1E293B]/50' : ''}`}>
+      <td className={`py-4 px-6 text-left ${isSub ? 'pl-10 text-[11px] text-[#64748B] italic' : 'text-[12px] font-bold uppercase text-[#F8FAFC]'} ${isTotal ? 'text-[#10B981]' : ''}`}>
+        {isSub && <span className="mr-2">└</span>}
+        {label}
+      </td>
+      {values.map((v: any, i: number) => (
+        <td key={i} className={`py-4 px-6 text-right font-mono text-xs border-l border-[#334155] ${isTotal ? 'font-bold' : ''}`}>
+          {v}
+        </td>
+      ))}
+    </tr>
   );
 }
