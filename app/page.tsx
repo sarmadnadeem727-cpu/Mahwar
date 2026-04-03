@@ -9,7 +9,6 @@ import SolutionSection from "@/components/sections/SolutionSection";
 import IntelligenceSection from "@/components/sections/IntelligenceSection";
 import GCCSection from "@/components/sections/GCCSection";
 import TechnologySection from "@/components/sections/TechnologySection";
-import TestimonialsSection from "@/components/sections/TestimonialsSection";
 import CTASection from "@/components/sections/CTASection";
 import { useTerminalStore } from "@/store/useTerminalStore";
 
@@ -29,7 +28,6 @@ export default function Home() {
         <IntelligenceSection />
         <GCCSection />
         <TechnologySection />
-        <TestimonialsSection />
         <CTASection />
       </div>
 

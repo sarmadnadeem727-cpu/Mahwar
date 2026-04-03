@@ -101,7 +101,7 @@ export function ThreeStatementModel() {
       return `${((num / rev) * 100).toFixed(1)}%`;
     }
     // APPLY FX CONVERSION
-    return fmt.accounting(convert(num, 'SAR', currency));
+    return fmt.accounting(convert(num, 'SAR'));
   };
 
   const validations = [];
@@ -228,8 +228,8 @@ export function ThreeStatementModel() {
               Regional Probe
             </h3>
             <div className="space-y-4">
-              {validations.map((v, i) => (
-                <div key={i} className={`p-4 border ${v.pass ? 'border-[#10B981]/20 bg-[#10B981]/5' : 'border-red-500/20 bg-red-500/5'}`}>
+              {validations.map((v, mIdx) => (
+                <div key={mIdx} className={`p-4 border ${v.pass ? 'border-[#10B981]/20 bg-[#10B981]/5' : 'border-red-500/20 bg-red-500/5'}`}>
                   <div className="flex items-center gap-2 mb-1">
                     {v.pass ? <CheckCircle2 className="w-4 text-[#10B981]" /> : <AlertCircle className="w-4 text-red-500" />}
                     <p className={`text-[10px] font-bold uppercase ${v.pass ? 'text-[#10B981]' : 'text-red-500'}`}>{v.test}</p>
@@ -242,8 +242,8 @@ export function ThreeStatementModel() {
                 <h4 className="text-[9px] font-bold uppercase text-[#F8FAFC] mb-2 tracking-widest">Internal ZATCA Probe</h4>
                 <div className="flex justify-between items-end">
                    <div>
-                     <p className="text-[10px] font-mono text-[#64748B]">Base: {fmt.accounting(convert(zakatBase, 'SAR', currency))}</p>
-                     <p className="text-[10px] font-mono text-[#10B981] font-bold">Zakat: {fmt.accounting(convert(zakatZatca, 'SAR', currency))}</p>
+                     <p className="text-[10px] font-mono text-[#64748B]">Base: {fmt.accounting(convert(zakatBase, 'SAR'))}</p>
+                     <p className="text-[10px] font-mono text-[#10B981] font-bold">Zakat: {fmt.accounting(convert(zakatZatca, 'SAR'))}</p>
                    </div>
                    <div className="text-[8px] bg-[#10B981] text-[#020617] px-1 font-bold">AAOIFI_V2</div>
                 </div>

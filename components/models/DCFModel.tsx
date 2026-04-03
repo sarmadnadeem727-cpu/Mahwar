@@ -130,7 +130,7 @@ export function DCFModel() {
             <div>
               <div className="text-[10px] text-[#64748B] mb-1 uppercase tracking-[0.2em] font-bold">Implied Price ({currency})</div>
               <div className="font-mono font-bold text-4xl text-[#F8FAFC]">
-                {fmt.accounting(convert(data.bridge.impliedSharePrice, 'SAR', currency))}
+                {fmt.accounting(convert(data.bridge.impliedSharePrice, 'SAR'))}
               </div>
               <div className={`font-mono text-xs mt-1 font-bold ${(upside ?? 0) >= 0 ? "text-[#10B981]" : "text-red-400"}`}>
                 {(upside ?? 0) > 0 ? "▲" : "▼"} {Math.abs(upside || 0).toFixed(1)}% { (upside ?? 0) >= 0 ? "Upside" : "Overvalued" }
@@ -168,19 +168,19 @@ export function DCFModel() {
               <div className="space-y-4">
                 <div className="flex justify-between border-b border-[#334155] pb-3">
                    <span className="text-[9px] text-[#94A3B8] font-bold uppercase tracking-wider">Enterprise Value</span>
-                   <span className="font-mono text-xs text-[#F8FAFC]">{fmt.accounting(convert(data.bridge.enterpriseValue, 'SAR', currency))}</span>
+                   <span className="font-mono text-xs text-[#F8FAFC]">{fmt.accounting(convert(data.bridge.enterpriseValue, 'SAR'))}</span>
                 </div>
                 <div className="flex justify-between border-b border-[#334155] pb-3">
                    <span className="text-[9px] text-[#94A3B8] font-bold uppercase tracking-wider">(+) Cash</span>
-                   <span className="font-mono text-xs text-[#10B981]">+{fmt.accounting(convert(data.bridge.cash, 'SAR', currency))}</span>
+                   <span className="font-mono text-xs text-[#10B981]">+{fmt.accounting(convert(data.bridge.cash, 'SAR'))}</span>
                 </div>
                 <div className="flex justify-between border-b border-[#334155] pb-3">
                    <span className="text-[9px] text-[#94A3B8] font-bold uppercase tracking-wider">(-) Net Debt</span>
-                   <span className="font-mono text-xs text-red-400">-{fmt.accounting(convert(data.bridge.netDebt, 'SAR', currency))}</span>
+                   <span className="font-mono text-xs text-red-400">-{fmt.accounting(convert(data.bridge.netDebt, 'SAR'))}</span>
                 </div>
                 <div className="flex justify-between pt-2">
                    <span className="text-[10px] text-[#F8FAFC] font-bold uppercase tracking-widest">Equity Value</span>
-                   <span className="font-mono text-sm text-[#F59E0B] font-bold">{fmt.accounting(convert(data.bridge.equityValue, 'SAR', currency))}</span>
+                   <span className="font-mono text-sm text-[#F59E0B] font-bold">{fmt.accounting(convert(data.bridge.equityValue, 'SAR'))}</span>
                 </div>
               </div>
             </div>
@@ -197,13 +197,13 @@ export function DCFModel() {
                  </tr>
                </thead>
                <tbody>
-                  <TableRow label="Revenue" values={projections.map(p => fmt.accounting(convert(p.revenue, 'SAR', currency)))} />
-                  <TableRow label="NOPAT" values={projections.map(p => fmt.accounting(convert(p.nopat, 'SAR', currency)))} />
-                  <TableRow label="(+) D&A" values={projections.map(p => fmt.accounting(convert(p.dAndA, 'SAR', currency)))} isSub />
-                  <TableRow label="(-) CapEx" values={projections.map(p => `(${fmt.accounting(convert(p.capex, 'SAR', currency))})`)} isSub />
-                  <TableRow label="Unlevered Free Cash Flow" values={projections.map(p => fmt.accounting(convert(p.fcff, 'SAR', currency)))} isTotal />
+                  <TableRow label="Revenue" values={projections.map(p => fmt.accounting(convert(p.revenue, 'SAR')))} />
+                  <TableRow label="NOPAT" values={projections.map(p => fmt.accounting(convert(p.nopat, 'SAR')))} />
+                  <TableRow label="(+) D&A" values={projections.map(p => fmt.accounting(convert(p.dAndA, 'SAR')))} isSub />
+                  <TableRow label="(-) CapEx" values={projections.map(p => `(${fmt.accounting(convert(p.capex, 'SAR'))})`)} isSub />
+                  <TableRow label="Unlevered Free Cash Flow" values={projections.map(p => fmt.accounting(convert(p.fcff, 'SAR')))} isTotal />
                   <TableRow label="Discount Factor" values={projections.map(p => p.discountFactor.toFixed(4))} isSub />
-                  <TableRow label="PV of FCF" values={projections.map(p => fmt.accounting(convert(p.pvFcff, 'SAR', currency)))} isTotal />
+                  <TableRow label="PV of FCF" values={projections.map(p => fmt.accounting(convert(p.pvFcff, 'SAR')))} isTotal />
                </tbody>
              </table>
            </div>
@@ -227,7 +227,7 @@ export function DCFModel() {
                           <td className="p-3 border border-[#334155] font-bold text-[#94A3B8] text-left">{(data.sensitivityTable!.rows[ri] * 100).toFixed(1)}%</td>
                           {row.slice(0, 7).map((v, ci) => (
                             <td key={ci} className={`p-3 border border-[#334155] ${v > data.bridge.impliedSharePrice ? 'text-[#10B981]' : 'text-red-400'}`}>
-                              {v ? fmt.accounting(convert(v, 'SAR', currency)) : "—"}
+                              {v ? fmt.accounting(convert(v)) : "—"}
                             </td>
                           ))}
                         </tr>

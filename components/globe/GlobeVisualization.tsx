@@ -1,177 +1,172 @@
 "use client";
 
-import React, { useRef, useMemo } from "react";
+import React, { useRef, useMemo, useState, useEffect, Suspense } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Html } from "@react-three/drei";
+import { OrbitControls, Html, PerspectiveCamera } from "@react-three/drei";
 import * as THREE from "three";
 import { latLonToVec3, GCC_CITIES } from "@/lib/globe-utils";
 
 const GLOBE_RADIUS = 2;
-const DOT_SPACING = 3; // Increased density for better highlighting visualization
 
-const GlobeDots = () => {
-  const pointsRef = useRef<THREE.Points>(null);
+// High-Performance Data Streaming Arcs
+const GLOBAL_HUBS = [
+  { name: "London", lat: 51.5074, lon: -0.1278 },
+  { name: "New York", lat: 40.7128, lon: -74.0060 },
+  { name: "Tokyo", lat: 35.6895, lon: 139.6917 },
+  { name: "Shanghai", lat: 31.2304, lon: 121.4737 },
+  { name: "Singapore", lat: 1.3521, lon: 103.8198 },
+];
 
-  const { positions, colors } = useMemo(() => {
-    const pos: number[] = [];
-    const cols: number[] = [];
-    const colorEmerald = new THREE.Color("#10B981");
-    const colorGold = new THREE.Color("#F59E0B");
-    const colorBase = new THREE.Color("#1E293B");
+/**
+ * Animated Data Arcs flying out from Riyadh.
+ * Simulates high-speed global transactional intelligence.
+ */
+const DataArc = ({ start, end }: { start: THREE.Vector3; end: THREE.Vector3 }) => {
+  const lineRef = useRef<THREE.Line>(null);
+  
+  const points = useMemo(() => {
+    // Generate a quadratic bezier curve to lift the arc above the sphere
+    const mid = start.clone().lerp(end, 0.5).normalize().multiplyScalar(GLOBE_RADIUS * 1.5);
+    const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+    return curve.getPoints(50);
+  }, [start, end]);
 
-    for (let lat = -90; lat <= 90; lat += DOT_SPACING) {
-      for (let lon = -180; lon <= 180; lon += DOT_SPACING) {
-        const v = latLonToVec3(lat, lon, GLOBE_RADIUS);
-        pos.push(v.x, v.y, v.z);
-
-        // Precise GCC Boundaries Masking
-        const isKSA = lat >= 16 && lat <= 32.5 && lon >= 34.5 && lon <= 55.5;
-        const isUAE = lat >= 22.5 && lat <= 26 && lon >= 51.5 && lon <= 56.5;
-        const isQatar = lat >= 24.5 && lat <= 26.5 && lon >= 50.5 && lon <= 51.5;
-        const isKuwait = lat >= 28.5 && lat <= 30.1 && lon >= 46.5 && lon <= 48.5;
-        const isOman = (lat >= 16.5 && lat <= 26.5 && lon >= 52 && lon <= 60) || (lat >= 23 && lat <= 27 && lon >= 56 && lon <= 57);
-        const isBahrain = lat >= 25.5 && lat <= 26.5 && lon >= 50.3 && lon <= 50.8;
-
-        if (isKSA) {
-          cols.push(colorGold.r, colorGold.g, colorGold.b);
-        } else if (isUAE || isQatar || isKuwait || isOman || isBahrain) {
-          cols.push(colorEmerald.r, colorEmerald.g, colorEmerald.b);
-        } else {
-          cols.push(colorBase.r, colorBase.g, colorBase.b);
-        }
-      }
-    }
-    return { positions: new Float32Array(pos), colors: new Float32Array(cols) };
-  }, []);
-
-  // Performance: Slower, subtle rotation only
-  useFrame((state, delta) => {
-    if (pointsRef.current) {
-      pointsRef.current.rotation.y += 0.02 * delta;
+  useFrame(({ clock }) => {
+    if (lineRef.current) {
+      const material = lineRef.current.material as THREE.LineBasicMaterial;
+      // Marching ants animation using dashOffset
+      const t = clock.getElapsedTime();
+      (material as any).dashOffset = -t * 0.5;
     }
   });
 
   return (
-    <points ref={pointsRef}>
+    <line ref={lineRef as any}>
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={positions.length / 3}
-          array={positions}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-color"
-          count={colors.length / 3}
-          array={colors}
-          itemSize={3}
+          args={[new Float32Array(points.flatMap(p => [p.x, p.y, p.z])), 3]}
         />
       </bufferGeometry>
-      <pointsMaterial size={0.015} vertexColors transparent opacity={0.6} sizeAttenuation={true} />
-    </points>
-  );
-};
-
-const CityMarker = ({ name, lat, lon, primary, index }: (typeof GCC_CITIES)[0]) => {
-  const pos = useMemo(() => latLonToVec3(lat, lon, GLOBE_RADIUS * 1.02), [lat, lon]);
-
-  return (
-    <group position={pos}>
-      {/* Static Point */}
-      <mesh>
-        <sphereGeometry args={[0.02, 16, 16]} />
-        <meshBasicMaterial color={primary ? "#F59E0B" : "#10B981"} />
-      </mesh>
-      
-      {/* High-Contrast HTML Label */}
-      <Html distanceFactor={8} zIndexRange={[100, 0]}>
-        <div className="flex flex-col items-start gap-1 whitespace-nowrap pointer-events-none">
-          <div className="bg-[#0F172A] border border-[#334155] px-2 py-1 rounded shadow-lg">
-            <span className="text-[#F8FAFC] font-mono text-[10px] font-bold tracking-wider uppercase">
-              {name}
-            </span>
-            <span className="text-[#94A3B8] font-mono text-[8px] ml-2 font-semibold">
-              {index}
-            </span>
-          </div>
-        </div>
-      </Html>
-    </group>
-  );
-};
-
-const ConnectionArc = ({ start, end }: { start: (typeof GCC_CITIES)[0]; end: (typeof GCC_CITIES)[0] }) => {
-  const { points } = useMemo(() => {
-    const v1 = latLonToVec3(start.lat, start.lon, GLOBE_RADIUS);
-    const v2 = latLonToVec3(end.lat, end.lon, GLOBE_RADIUS);
-    const mid = v1.clone().lerp(v2, 0.5).normalize().multiplyScalar(GLOBE_RADIUS * 1.3);
-    const curve = new THREE.QuadraticBezierCurve3(v1, mid, v2);
-    return { points: curve.getPoints(50) };
-  }, [start, end]);
-
-  return (
-    <line>
-      <bufferGeometry attach="geometry">
-        <bufferAttribute
-          attach="attributes-position"
-          count={points.length}
-          array={new Float32Array(points.flatMap(p => [p.x, p.y, p.z]))}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <lineBasicMaterial
-        attach="material"
-        color="#334155"
-        transparent
-        opacity={0.2}
+      <lineDashedMaterial 
+        color="#10B981" 
+        transparent 
+        opacity={0.4} 
+        dashSize={0.05} 
+        gapSize={0.05} 
       />
     </line>
   );
 };
 
-const GlobeScene = () => {
-  const riyadh = GCC_CITIES.find(c => c.primary)!;
+const Earth = () => {
+  const [geoData, setGeoData] = useState<any>(null);
+
+  useEffect(() => {
+    fetch("/world-countries.json")
+      .then(res => res.ok ? res.json() : null)
+      .then(data => setGeoData(data))
+      .catch(() => console.warn("Asset Missing: Place world-countries.json in /public"));
+  }, []);
+
+  const gccLines = useMemo(() => {
+    if (!geoData) return [];
+    return geoData.features
+      .filter((f: any) => ["Saudi Arabia", "United Arab Emirates", "Qatar", "Kuwait", "Oman", "Bahrain"].includes(f.properties.name))
+      .map((feature: any) => {
+        const lines: THREE.Vector3[][] = [];
+        const process = (coords: any) => {
+           lines.push(coords.map((c: any) => latLonToVec3(c[1], c[0], GLOBE_RADIUS * 1.002)));
+        };
+        if (feature.geometry.type === "Polygon") feature.geometry.coordinates.forEach(process);
+        else if (feature.geometry.type === "MultiPolygon") feature.geometry.coordinates.forEach((p: any) => p.forEach(process));
+        return lines;
+      }).flat();
+  }, [geoData]);
 
   return (
-    <>
-      <ambientLight intensity={0.5} />
-      <pointLight position={[10, 10, 10]} intensity={1} />
+    <group>
+      {/* Absolute Dark Institutional Base */}
+      <mesh>
+        <sphereGeometry args={[GLOBE_RADIUS, 64, 64]} />
+        <meshStandardMaterial color="#0F172A" roughness={1} metalness={0} />
+      </mesh>
+
+      {/* GCC Emissive Highlight Zone */}
+      {gccLines.map((line: THREE.Vector3[], i: number) => (
+        <line key={i}>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              args={[new Float32Array(line.flatMap((v: THREE.Vector3) => [v.x, v.y, v.z])), 3]}
+            />
+          </bufferGeometry>
+          <lineBasicMaterial color="#10B981" linewidth={2} transparent opacity={0.6} />
+        </line>
+      ))}
+    </group>
+  );
+};
+
+const GlobeScene = () => {
+  const riyadhPos = useMemo(() => latLonToVec3(24.7136, 46.6753, GLOBE_RADIUS), []);
+  const hubPositions = useMemo(() => GLOBAL_HUBS.map(h => latLonToVec3(h.lat, h.lon, GLOBE_RADIUS)), []);
+
+  return (
+    <Suspense fallback={null}>
+      <PerspectiveCamera makeDefault position={[0, 0, 6]} fov={35} />
+      <ambientLight intensity={0.3} />
+      <directionalLight position={[10, 10, 5]} intensity={1.5} color="#F8FAFC" />
       
-      <group rotation={[0.4, -0.6, 0]}>
-        <GlobeDots />
+      <group rotation={[0.4, 0, 0]}>
+        <Earth />
+        {hubPositions.map((hub, i) => (
+          <DataArc key={i} start={riyadhPos} end={hub} />
+        ))}
+        {/* Institutional Node Markers */}
         {GCC_CITIES.map((city, i) => (
-          <React.Fragment key={i}>
-            <CityMarker {...city} />
-            {!city.primary && (
-              <ConnectionArc start={riyadh} end={city} />
-            )}
-          </React.Fragment>
+          <group key={i} position={latLonToVec3(city.lat, city.lon, GLOBE_RADIUS * 1.05)}>
+            <mesh>
+              <sphereGeometry args={[0.015, 8, 8]} />
+              <meshBasicMaterial color={city.primary ? "#F59E0B" : "#10B981"} />
+            </mesh>
+            <Html distanceFactor={10} zIndexRange={[100, 0]} pointerEvents="none">
+              <div className="bg-[#020617] border border-[#334155] px-2 py-1 flex items-center gap-2 whitespace-nowrap">
+                <div className={`w-1 h-1 rounded-full ${city.primary ? 'bg-[#F59E0B]' : 'bg-[#10B981]'}`} />
+                <span className="text-[#F8FAFC] font-mono text-[8px] uppercase tracking-tighter">
+                  {city.name} — {city.index}
+                </span>
+              </div>
+            </Html>
+          </group>
         ))}
       </group>
 
       <OrbitControls
+        autoRotate
+        autoRotateSpeed={0.5}
         enableZoom={false}
         enablePan={false}
-        autoRotate={false}
-        rotateSpeed={0.5}
+        enableDamping
+        dampingFactor={0.05}
       />
-    </>
+    </Suspense>
   );
 };
 
 const GlobeVisualization = () => {
   return (
-    <div className="absolute inset-0 w-full h-full">
-      <Canvas
-        camera={{ position: [0, 0, 5], fov: 40 }}
-        dpr={[1, 2]}
-        gl={{ antialias: true, alpha: true }}
-      >
+    <div className="absolute inset-0 w-full h-full bg-[#020617]">
+      <Canvas shadows dpr={[1, 2]} gl={{ antialias: true, alpha: true }}>
         <GlobeScene />
       </Canvas>
+      <div className="absolute bottom-10 left-10 pointer-events-none opacity-20 hidden md:block">
+        <p className="text-[#64748B] text-[8px] font-mono uppercase tracking-[0.4em]">
+          DATA_STREAMING_NODE_v8.0
+        </p>
+      </div>
     </div>
   );
 };
 
 export default GlobeVisualization;
-

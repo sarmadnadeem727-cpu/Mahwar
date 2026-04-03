@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import dynamic from 'next/dynamic';
 import { TickerSearch } from "@/components/features/TickerSearch";
+import DashboardGCCMap from "@/components/features/DashboardGCCMap";
 import { useTerminalStore, type Currency } from "@/store/useTerminalStore";
 import MahwarLogo from "@/components/ui/MahwarLogo";
 

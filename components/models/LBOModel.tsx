@@ -96,11 +96,11 @@ export function LBOModel() {
             <div className="space-y-6">
                 <div className="flex justify-between border-b border-[#334155] pb-3">
                    <span className="text-[9px] text-[#F8FAFC] font-bold uppercase">Entry EV</span>
-                   <span className="font-mono text-xs text-[#F8FAFC]">{fmt.accounting(convert(result.sourcesUses.entryEv, 'SAR', currency))}</span>
+                   <span className="font-mono text-xs text-[#F8FAFC]">{fmt.accounting(convert(result.sourcesUses.entryEv, 'SAR'))}</span>
                 </div>
                 <div className="flex justify-between border-b border-[#334155] pb-3">
                    <span className="text-[9px] text-[#94A3B8] font-bold uppercase">Equity Check</span>
-                   <span className="font-mono text-xs text-[#10B981]">{fmt.accounting(convert(result.sourcesUses.equityCheck, 'SAR', currency))}</span>
+                   <span className="font-mono text-xs text-[#10B981]">{fmt.accounting(convert(result.sourcesUses.equityCheck, 'SAR'))}</span>
                 </div>
                 <div className="pt-4">
                    <label className="text-[10px] font-bold text-[#64748B] uppercase block mb-3">Exit Multiple: <span className="text-[#10B981]">{modelState.exitMultiple}x</span></label>
@@ -154,11 +154,11 @@ export function LBOModel() {
                  </tr>
                </thead>
                <tbody>
-                  <TableRow label="EBITDA" values={result.years.map(y => fmt.accounting(convert(y.ebitda, 'SAR', currency)))} />
-                  <TableRow label="CFADS" values={result.years.map(y => fmt.accounting(convert(y.cfads, 'SAR', currency)))} isSub />
-                  <TableRow label="Mandatory Amortization" values={result.years.map(y => `(${fmt.accounting(convert(y.mandatoryAmort, 'SAR', currency))})`)} isSub />
-                  <TableRow label="Cash Sweep" values={result.years.map(y => `(${fmt.accounting(convert(y.cashSweep, 'SAR', currency))})`)} isSub />
-                  <TableRow label="Closing Debt Balance" values={result.years.map(y => fmt.accounting(convert(y.debtClose, 'SAR', currency)))} isTotal />
+                  <TableRow label="EBITDA" values={result.years.map(y => fmt.accounting(convert(y.ebitda, 'SAR')))} />
+                  <TableRow label="CFADS" values={result.years.map(y => fmt.accounting(convert(y.cfads, 'SAR')))} isSub />
+                  <TableRow label="Mandatory Amortization" values={result.years.map(y => `(${fmt.accounting(convert(y.totA, 'SAR'))})`)} isSub />
+                  <TableRow label="Cash Sweep" values={result.years.map(y => `(${fmt.accounting(convert(y.totalSweep, 'SAR'))})`)} isSub />
+                  <TableRow label="Closing Debt Balance" values={result.years.map(y => fmt.accounting(convert(y.debtClose, 'SAR')))} isTotal />
                </tbody>
              </table>
            </div>
