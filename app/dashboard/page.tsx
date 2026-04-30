@@ -57,10 +57,10 @@ export default function DashboardPage() {
       default: return (
         <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="grid grid-cols-12 gap-6">
           <motion.div variants={staggerItem} className="col-span-12">
-            <div className="bg-[#0F172A] border border-[#334155] p-12 text-left mb-8">
-              <h2 className="text-[#F8FAFC] font-mono text-xs uppercase tracking-[0.3em] font-bold mb-4">Institutional Launchpad</h2>
-              <h1 className="text-4xl text-[#F8FAFC] font-bold mb-6">Unified GCC Financial Intelligence</h1>
-              <p className="text-[#94A3B8] max-w-2xl leading-relaxed">
+            <div className="bg-zinc-950 border border-zinc-800 p-12 text-left mb-8 rounded-xl backdrop-blur-md">
+              <h2 className="text-zinc-400 font-mono text-xs uppercase tracking-[0.3em] font-bold mb-4">Institutional Launchpad</h2>
+              <h1 className="text-4xl text-zinc-100 font-bold mb-6 tracking-tight">Unified GCC Financial Intelligence</h1>
+              <p className="text-zinc-400 max-w-2xl leading-relaxed">
                 Connect to standardized regional exchange data with native support for sovereign tax treatments, IFRS compliance, and precise currency mapping across all GCC capital markets.
               </p>
             </div>
@@ -72,11 +72,11 @@ export default function DashboardPage() {
               key={item.id} 
               variants={staggerItem} 
               onClick={() => setPanel(item.id)}
-              className="col-span-12 md:col-span-4 bg-[#0F172A] border border-[#334155] p-8 cursor-pointer hover:bg-[#1E293B] transition-colors"
+              className="col-span-12 md:col-span-4 bg-zinc-950 border border-zinc-800 p-8 cursor-pointer hover:bg-zinc-900 transition-colors rounded-xl"
             >
-              <div className="text-[#F59E0B] mb-6">{item.icon}</div>
-              <h3 className="text-[#F8FAFC] font-mono font-bold uppercase tracking-widest text-sm mb-2">{item.label}</h3>
-              <p className="text-[#64748B] text-xs">Direct terminal access to institutional-grade modelling engines.</p>
+              <div className="text-zinc-300 mb-6">{item.icon}</div>
+              <h3 className="text-zinc-100 font-mono font-bold uppercase tracking-widest text-sm mb-2">{item.label}</h3>
+              <p className="text-zinc-400 text-xs">Direct terminal access to institutional-grade modelling engines.</p>
             </motion.div>
           ))}
         </motion.div>
@@ -85,21 +85,21 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className={`flex min-h-screen bg-[#020617] text-[#F8FAFC] ${isAr ? 'font-arabic' : ''}`} dir={isAr ? "rtl" : "ltr"}>
+    <div className={`flex min-h-screen bg-[#09090b] text-zinc-300 ${isAr ? 'font-arabic' : ''}`} dir={isAr ? "rtl" : "ltr"}>
       {/* SIDEBAR */}
-      <aside className="w-72 min-w-72 bg-[#0F172A] border-r border-[#334155] flex flex-col sticky top-0 h-screen">
-        <div className="p-8 border-b border-[#334155] flex flex-col items-center gap-4">
+      <aside className="w-72 min-w-72 bg-zinc-950 border-r border-zinc-800 flex flex-col sticky top-0 h-screen">
+        <div className="p-8 border-b border-zinc-800 flex flex-col items-center gap-4">
           <MahwarLogo size={60} animate={false} />
           <div className="text-center">
-            <div className="font-mono text-xl font-bold tracking-[0.2em] uppercase">Mahwar</div>
-            <div className="text-[10px] text-[#10B981] font-bold tracking-[0.1em] opacity-80">GCC TERMINAL v2.1</div>
+            <div className="font-mono text-xl font-bold tracking-[0.2em] uppercase text-zinc-100">Mahwar</div>
+            <div className="text-[10px] text-zinc-500 font-bold tracking-[0.1em] opacity-80 uppercase">GCC TERMINAL v2.1</div>
           </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto p-4 space-y-6">
           {NAV_SECTIONS.map((section) => (
             <div key={section.label}>
-              <div className="px-4 mb-2 text-[9px] font-bold text-[#64748B] uppercase tracking-[0.2em]">{section.label}</div>
+              <div className="px-4 mb-2 text-[9px] font-bold text-zinc-500 uppercase tracking-[0.2em]">{section.label}</div>
               {section.items.map((item) => {
                 const active = panel === item.id;
                 return (
@@ -107,7 +107,7 @@ export default function DashboardPage() {
                     key={item.id}
                     onClick={() => setPanel(item.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-colors ${
-                      active ? "bg-[#1E293B] text-[#F59E0B] border-l-2 border-[#F59E0B]" : "text-[#94A3B8] hover:text-[#F8FAFC]"
+                      active ? "bg-zinc-900 text-zinc-100 border-l-2 border-zinc-300" : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/50"
                     }`}
                   >
                     {item.icon}
@@ -119,18 +119,18 @@ export default function DashboardPage() {
           ))}
         </nav>
 
-        <div className="p-6 border-t border-[#334155]">
-          <div className="text-[9px] text-[#64748B] font-mono mb-2 uppercase select-none">Authored By</div>
-          <div className="text-[11px] font-bold text-[#F8FAFC] opacity-90">Muhammad Sarmad Nadeem</div>
-          <div className="text-[8px] text-[#94A3B8] font-mono mt-1 uppercase">© 2026 All Rights Reserved</div>
+        <div className="p-6 border-t border-zinc-800">
+          <div className="text-[9px] text-zinc-500 font-mono mb-2 uppercase select-none">Authored By</div>
+          <div className="text-[11px] font-bold text-zinc-300 opacity-90">Muhammad Sarmad Nadeem</div>
+          <div className="text-[8px] text-zinc-500 font-mono mt-1 uppercase">© 2026 All Rights Reserved</div>
         </div>
       </aside>
 
       {/* MAIN */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-20 border-b border-[#334155] bg-[#020617]/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-20">
+        <header className="h-20 border-b border-zinc-800 bg-[#09090b]/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-20">
           <div className="flex items-center gap-12 flex-1">
-            <div className="font-mono text-sm font-bold uppercase tracking-widest text-[#F8FAFC]">
+            <div className="font-mono text-sm font-bold uppercase tracking-widest text-zinc-100">
               {panel === "hub" ? "Intelligence_Hub" : panel}
             </div>
             <div className="flex-1 max-w-xl">
@@ -143,7 +143,7 @@ export default function DashboardPage() {
             <select 
               value={currency}
               onChange={(e) => setCurrency(e.target.value as Currency)}
-              className="bg-[#0F172A] border border-[#334155] text-[#F8FAFC] text-[11px] font-bold px-3 py-1.5 rounded focus:outline-none focus:border-[#F59E0B]"
+              className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-[11px] font-bold px-3 py-1.5 rounded focus:outline-none focus:border-zinc-500"
             >
               {['SAR', 'AED', 'KWD', 'BHD', 'OMR', 'QAR'].map(cur => (
                 <option key={cur} value={cur}>{cur}</option>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
 
             <button
               onClick={() => setLanguage(language === 'ar' ? 'en' : 'ar')}
-              className="flex items-center gap-2 px-4 py-1.5 bg-[#0F172A] border border-[#334155] text-[#F59E0B] text-[11px] font-bold hover:bg-[#1E293B] transition-colors uppercase tracking-widest"
+              className="flex items-center gap-2 px-4 py-1.5 bg-zinc-950 border border-zinc-800 text-zinc-300 text-[11px] font-bold hover:bg-zinc-900 transition-colors uppercase tracking-widest"
             >
               <Globe size={12} />
               {language === 'ar' ? "English" : "العربية"}

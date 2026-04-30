@@ -1,6 +1,8 @@
 // lib/finance/lbo.ts
 
 import { computeIrr } from "./irr";
+import { InsufficientDataError } from "./dcf";
+
 
 export interface DebtTranche {
   name: string;
@@ -25,7 +27,7 @@ export interface LboYearInput {
 }
 
 function runYear(tranches: DebtTranche[], minCash: number, cashOpen: number, inp: LboYearInput) {
-  const ebitda = inp.revenue * inp.ebitdaMargin;
+  const ebitda = (inp.revenue || 0) * (inp.ebitdaMargin || 0);
   const sorted = [...tranches].sort((a, b) => a.seniority - b.seniority);
 
   const withSvc = sorted.map(t => ({
@@ -35,9 +37,9 @@ function runYear(tranches: DebtTranche[], minCash: number, cashOpen: number, inp
     mandAmort: t.type === "PIK" || t.type === "RCF" ? 0 : t.commitment * t.amortPctPa,
   }));
 
-  const totI = withSvc.reduce((s, t) => s + t.interest, 0);
-  const totA = withSvc.reduce((s, t) => s + t.mandAmort, 0);
-  const cfads = ebitda - inp.capex - inp.deltaNwc - inp.taxesZakat - totI - totA;
+  const totI = withSvc.reduce((s, t) => s + (t.interest || 0), 0);
+  const totA = withSvc.reduce((s, t) => s + (t.mandAmort || 0), 0);
+  const cfads = ebitda - (inp.capex || 0) - (inp.deltaNwc || 0) - (inp.taxesZakat || 0) - totI - totA;
 
   let sw = Math.max(0, cashOpen + cfads - minCash);
   const swept = withSvc.map(t => {
@@ -95,8 +97,11 @@ export function runLbo(
   minCash = 0,
   openingCash = 0
 ) {
-  const totalDebt = initialTranches.reduce((s, t) => s + t.openingBalance, 0);
-  const equityCheck = entryEv + transactionFees - totalDebt;
+  if (!yearInputs || yearInputs.length === 0) {
+    throw new InsufficientDataError("No projected years provided for LBO model.");
+  }
+  const totalDebt = initialTranches.reduce((s, t) => s + (t.openingBalance || 0), 0);
+  const equityCheck = (entryEv || 0) + (transactionFees || 0) - totalDebt;
   let tranches = initialTranches;
   let cash = openingCash;
   interface YearResult {
@@ -147,7 +152,10 @@ export function runLbo(
     });
   }
 
-  const exitYr = years.find(y => y.isExit)!;
+  const exitYr = years.find(y => y.isExit);
+  if (!exitYr) {
+    throw new InsufficientDataError("Exit year not found within projected years.");
+  }
   const { irr, warning } = computeIrr(cfs);
   const moic = equityCheck > 0 ? exitYr.exitEquity / equityCheck : 0;
 
@@ -174,13 +182,13 @@ export function runLbo(
 
   return {
     sourcesUses: {
-      entryEv,
-      transactionFees,
-      totalUses: entryEv + transactionFees,
+      entryEv: entryEv || 0,
+      transactionFees: transactionFees || 0,
+      totalUses: (entryEv || 0) + (transactionFees || 0),
       totalDebt,
       equityCheck,
-      entryLeverage: totalDebt / entryEbitda,
-      entryEquityPct: (equityCheck / (entryEv + transactionFees)) * 100,
+      entryLeverage: entryEbitda > 0 ? totalDebt / entryEbitda : 0,
+      entryEquityPct: ((entryEv || 0) + (transactionFees || 0)) > 0 ? (equityCheck / ((entryEv || 0) + (transactionFees || 0))) * 100 : 0,
     },
     years,
     cashFlows: cfs,

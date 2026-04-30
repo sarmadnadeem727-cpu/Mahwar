@@ -6,7 +6,7 @@ import { useTerminalStore } from "@/store/useTerminalStore";
 import { Users, TrendingUp, ArrowRight, Landmark } from "lucide-react";
 
 const OwnershipDetails = () => {
-  const { selectedTicker, language } = useTerminalStore();
+  const { activeTicker, language } = useTerminalStore();
   const isAr = language === "ar";
 
   // Mock Ownership Data
@@ -34,7 +34,7 @@ const OwnershipDetails = () => {
               <h3 className="text-xl font-serif font-bold text-[var(--text1)] mb-1 uppercase tracking-tight">
                 {isAr ? "هيكل الملكية المؤسسي" : "Institutional Ownership Structure"}
               </h3>
-              <p className="text-[10px] text-[var(--text3)] uppercase tracking-[.2em]">{selectedTicker} · Major Concentration</p>
+              <p className="text-[10px] text-[var(--text3)] uppercase tracking-[.2em]">{activeTicker} · Major Concentration</p>
 
             </div>
           </div>

@@ -5,10 +5,10 @@ import { motion } from "framer-motion";
 import { fmt } from "@/lib/fmt";
 import { useDCF } from "@/hooks/useFinancialModels";
 import { useTerminalStore } from "@/store/useTerminalStore";
-import { useQuery } from "@tanstack/react-query";
-import { fetchInstitutionalData } from "@/lib/services/terminalService";
+import { useMarketData } from "@/hooks/useMarketData";
+import { formatYahooFundamentalsToModel } from "@/lib/finance/adapter";
 import { ModelButton } from "@/components/ui/ModelButton";
-import { TrendingUp, ShieldCheck, ArrowRightLeft, Download, Calculator, ChevronRight } from "lucide-react";
+import { TrendingUp, ShieldCheck, ArrowRightLeft, Download, Calculator, ChevronRight, AlertTriangle } from "lucide-react";
 import { exportDCFToExcel, exportDCFToPDF } from "@/lib/services/exportService";
 import { useFX } from "@/hooks/useFX";
 
@@ -25,15 +25,11 @@ interface ProjectionPeriod {
 }
 
 export function DCFModel() {
-  const { calculate, data, loading } = useDCF();
-  const { selectedTicker, currency } = useTerminalStore();
+  const { calculate, data, loading, error: mathError } = useDCF();
+  const { activeTicker, currency } = useTerminalStore();
   const { convert } = useFX();
 
-  const { data: globalData, isLoading: fetchLoading } = useQuery({
-    queryKey: ['financialData', selectedTicker],
-    queryFn: () => fetchInstitutionalData(selectedTicker),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: globalData, isLoading: fetchLoading, isError: fetchError } = useMarketData(activeTicker);
 
   const [inputs, setInputs] = useState({
     baseRevenue: 5000,
@@ -79,24 +75,28 @@ export function DCFModel() {
       includeSukukInDebt: true,
     };
 
-    const latestBS = (globalData.financials.balance[globalData.financials.latestYear] || {}) as any;
+    const modelData = formatYahooFundamentalsToModel(globalData.fundamentals);
 
     const bridge = {
       enterpriseValue: 0,
-      cash: Number(latestBS.cashAndCashEquivalents || 0),
-      shortTermDebt: Number(latestBS.shortTermDebt || 0),
-      longTermDebt: Number(latestBS.longTermDebt || 0),
+      cash: Number(modelData?.cashAndEquivalents || 0),
+      shortTermDebt: Number(modelData?.totalDebt || 0),
+      longTermDebt: 0,
       sukuk: 0,
       leaseFinancingLiabilities: 0,
       eosbLiability: 0,
       minorityInterest: 0,
       otherDebtLike: 0,
       nonOperatingAssets: 0,
-      sharesOutstanding: inputs.sharesOutstanding,
-      currentPrice: globalData.price || 30.0,
+      sharesOutstanding: modelData?.sharesOutstanding || inputs.sharesOutstanding,
+      currentPrice: globalData.quote?.regularMarketPrice || globalData.quote?.currentPrice || 30.0,
     };
 
-    calculate(years, params, bridge);
+    try {
+      calculate(years, params, bridge);
+    } catch (e) {
+      console.error(e);
+    }
   }, [inputs, globalData, calculate]);
 
   const projections = (data?.projectedYears || []) as ProjectionPeriod[];
@@ -105,6 +105,32 @@ export function DCFModel() {
   const updateInput = (key: string, val: number) => {
     setInputs(prev => ({ ...prev, [key]: val }));
   };
+
+  if (fetchLoading) {
+    return (
+      <div className="flex flex-col gap-4 w-full h-[60vh] justify-center items-center">
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="w-16 h-16 rounded-full bg-[#1E293B] flex items-center justify-center border border-[#334155]"
+        >
+          <TrendingUp className="text-[#F59E0B] w-8 h-8 opacity-50" />
+        </motion.div>
+        <p className="text-[#64748B] font-mono text-sm tracking-widest uppercase animate-pulse">Syncing SEC Filings...</p>
+      </div>
+    );
+  }
+
+  if (fetchError || mathError || !data) {
+    return (
+      <div className="flex flex-col gap-4 w-full h-[60vh] justify-center items-center text-center">
+        <AlertTriangle className="text-red-500 w-12 h-12 mb-2 opacity-80" />
+        <div className="text-gray-500 font-mono text-sm uppercase tracking-widest max-w-md">
+          Model unavailable due to missing SEC filings or insufficient financial data for {activeTicker}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -120,7 +146,7 @@ export function DCFModel() {
           <div>
             <h1 className="font-mono text-2xl font-bold uppercase tracking-tighter">Sovereign DCF Engine</h1>
             <p className="text-[#64748B] text-[10px] font-mono tracking-widest uppercase">
-              {selectedTicker.replace(".SR", "")} • {currency} • INTRINSIC_VALUE_RECONCILIATION
+              {activeTicker?.replace(".SR", "") || "---"} • {currency} • INTRINSIC_VALUE_RECONCILIATION
             </p>
           </div>
         </div>

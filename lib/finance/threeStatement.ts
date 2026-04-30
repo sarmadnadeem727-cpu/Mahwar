@@ -1,4 +1,5 @@
 // lib/finance/threeStatement.ts
+import { InsufficientDataError } from "./dcf";
 
 /**
  * KSA Statutory Reserve: 10% of NI until reserve = 30% of share capital
@@ -93,6 +94,9 @@ export interface CashFlow {
 }
 
 export function validateThreeStatement(is: IncomeStatement, bs: BalanceSheet, cf: CashFlow, prevBs?: BalanceSheet) {
+  if (!is || !bs || !cf) {
+    throw new InsufficientDataError("Missing Income Statement, Balance Sheet, or Cash Flow for validation.");
+  }
   const errors: string[] = [],
     warnings: string[] = [];
 
@@ -184,9 +188,12 @@ export function validateThreeStatement(is: IncomeStatement, bs: BalanceSheet, cf
     warnings.push(`IS net income ${ni.toFixed(2)} ≠ CF starting NI ${cf.netIncomeCf}`);
 
   // RATIOS
-  const sf = (n: number | undefined, d: number | undefined) => (d ? (n || 0) / d : null);
+  const sf = (n: number | undefined, d: number | undefined) => {
+    if (!d || d === 0) return null;
+    return (n || 0) / d;
+  };
   const totalDebt = (bs.shortTermDebt || 0) + (bs.longTermDebt || 0) + (bs.sukuk || 0);
-  const netDebt = totalDebt - bs.cash;
+  const netDebt = totalDebt - (bs.cash || 0);
 
   interface Ratios {
     grossMargin: number | null;

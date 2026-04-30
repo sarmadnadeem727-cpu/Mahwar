@@ -10,7 +10,7 @@ import { useTerminalStore } from "@/store/useTerminalStore";
 import { Info, TrendingUp, ShieldCheck, DollarSign } from "lucide-react";
 
 const DividendAnalysis = () => {
-  const { selectedTicker, language } = useTerminalStore();
+  const { activeTicker, language } = useTerminalStore();
   const isAr = language === "ar";
 
   // Mock dividend data for 2222.SR (Aramco) and fallback
@@ -61,7 +61,7 @@ const DividendAnalysis = () => {
               <h3 className="text-xl font-serif font-bold text-[var(--text1)] mb-1 uppercase tracking-tight">
                 {isAr ? "سجل نمو التوزيعات" : "Dividend Growth History"}
               </h3>
-              <p className="text-[10px] text-[var(--text3)] uppercase tracking-[.2em]">{selectedTicker} · Annualized Returns</p>
+              <p className="text-[10px] text-[var(--text3)] uppercase tracking-[.2em]">{activeTicker} · Annualized Returns</p>
 
             </div>
             <div className="flex gap-2">

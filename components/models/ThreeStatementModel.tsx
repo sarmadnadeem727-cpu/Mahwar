@@ -5,8 +5,7 @@ import { motion } from "framer-motion";
 import { fmt } from "@/lib/fmt";
 import { useThreeStatement } from "@/hooks/useFinancialModels";
 import { useTerminalStore } from "@/store/useTerminalStore";
-import { useQuery } from "@tanstack/react-query";
-import { fetchInstitutionalData } from "@/lib/services/terminalService";
+import { useMarketData } from "@/hooks/useMarketData";
 import { exportFactbookToExcel, exportFactbookToPDF } from "@/lib/services/exportService";
 import { ModelButton } from "@/components/ui/ModelButton";
 import { FileText, CheckCircle2, AlertCircle, Calculator, Download, ChevronRight, BarChart3, Table as TableIcon } from "lucide-react";
@@ -54,15 +53,11 @@ function StatementRow({ label, values, isHeader, isTotal, indent }: StatementRow
 
 export function ThreeStatementModel() {
   const { validate, data: auditResults, loading } = useThreeStatement();
-  const { selectedTicker, currency } = useTerminalStore();
+  const { activeTicker, currency } = useTerminalStore();
   const [isCommonSize, setIsCommonSize] = useState(false);
   const { convert } = useFX();
 
-  const { data: globalData, isLoading: fetchLoading } = useQuery({
-    queryKey: ['financialData', selectedTicker],
-    queryFn: () => fetchInstitutionalData(selectedTicker),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: globalData, isLoading: fetchLoading } = useMarketData(activeTicker);
 
   const [activeStatement, setActiveStatement] = useState<"IS" | "BS" | "CF">("IS");
   const [viewMode, setViewMode] = useState<"table" | "charts">("table");
@@ -136,7 +131,7 @@ export function ThreeStatementModel() {
           <div>
             <h1 className="font-mono text-2xl font-bold uppercase tracking-tighter">Institutional Terminal Mode</h1>
             <p className="text-[#64748B] text-[10px] font-mono tracking-widest uppercase">
-              {selectedTicker.replace(".SR", "")} • {currency} • REGIONAL_AUDIT_ENABLED
+              {activeTicker?.replace(".SR", "") || "---"} • {currency} • REGIONAL_AUDIT_ENABLED
             </p>
           </div>
         </div>
@@ -259,7 +254,7 @@ export function ThreeStatementModel() {
               </div>
               <ChevronRight className="w-3 h-3" />
             </button>
-            <button onClick={() => globalData && exportFactbookToExcel(selectedTicker, isData)} className="w-full flex items-center justify-between text-[#F8FAFC] p-3 hover:bg-[#1E293B] border border-transparent hover:border-[#334155] transition-all">
+            <button onClick={() => globalData && exportFactbookToExcel(activeTicker, isData)} className="w-full flex items-center justify-between text-[#F8FAFC] p-3 hover:bg-[#1E293B] border border-transparent hover:border-[#334155] transition-all">
               <div className="flex items-center gap-3">
                 <TableIcon className="w-4 h-4 text-[#10B981]" />
                 <span className="text-[10px] font-bold uppercase tracking-widest">Excel Formula Export</span>

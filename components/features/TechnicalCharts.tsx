@@ -10,7 +10,7 @@ import {
 import { Settings, Download, Camera, SlidersHorizontal, Activity } from "lucide-react";
 
 const TechnicalCharts = () => {
-  const { selectedTicker, language } = useTerminalStore();
+  const { activeTicker, language } = useTerminalStore();
   const isAr = language === "ar";
   const [timeframe, setTimeframe] = useState("1D");
 
@@ -74,7 +74,7 @@ const TechnicalCharts = () => {
 
            <div className="flex items-center gap-4 mb-8">
               <div className="px-3 py-1 bg-[var(--pos-bg)] border border-[var(--pos)] rounded-full text-[10px] text-[var(--pos)] font-ibm-plex-mono font-bold">
-                 LIVE: {selectedTicker}
+                 LIVE: {activeTicker}
               </div>
               <h2 className="text-xl font-serif font-bold text-[var(--text1)] uppercase tracking-tight">{isAr ? "الرسم البياني المتقدم" : "Advanced Pro Terminal Chart"}</h2>
            </div>

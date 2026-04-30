@@ -2,19 +2,14 @@
 
 import React from "react";
 import { useTerminalStore } from "@/store/useTerminalStore";
-import { useQuery } from "@tanstack/react-query";
-import { fetchInstitutionalData } from "@/lib/services/terminalService";
+import { useMarketData } from "@/hooks/useMarketData";
 import { ShieldCheck, Calculator, AlertCircle, CheckCircle2, Search } from "lucide-react";
 import { fmt } from "@/lib/fmt";
 
 export function ShariahScreening() {
-  const { selectedTicker } = useTerminalStore();
+  const { activeTicker } = useTerminalStore();
   
-  const { data: globalData, isLoading } = useQuery({
-    queryKey: ['financialData', selectedTicker],
-    queryFn: () => fetchInstitutionalData(selectedTicker),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: globalData, isLoading } = useMarketData(activeTicker);
 
   if (isLoading || !globalData) {
     return (
@@ -49,7 +44,7 @@ export function ShariahScreening() {
           <div>
             <h1 className="font-mono text-2xl font-bold uppercase tracking-tighter">Regional_Shariah_Probe</h1>
             <p className="text-[#64748B] text-[10px] font-mono tracking-widest uppercase">
-              {selectedTicker.replace(".SR", "")} • AAOIFI_STANDARDS_V4 • Tadawul_LIVE
+              {activeTicker?.replace(".SR", "") || "---"} • AAOIFI_STANDARDS_V4 • Tadawul_LIVE
             </p>
           </div>
         </div>

@@ -9,7 +9,7 @@ import { UploadDataButton } from "@/components/ui/UploadDataButton";
 
 export function TickerSearch() {
   const [input, setInput] = useState("");
-  const { setTicker, isLoading, selectedTicker, language } = useTerminalStore();
+  const { setTicker, isLoading, activeTicker, language } = useTerminalStore();
   const t = translations[language];
   const isAr = language === "ar";
   

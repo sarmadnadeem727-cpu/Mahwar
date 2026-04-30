@@ -1,5 +1,12 @@
 // lib/finance/dcf.ts
 
+export class InsufficientDataError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InsufficientDataError";
+  }
+}
+
 export interface DcfYear {
   yearIndex: number;
   year: number;
@@ -63,8 +70,8 @@ export function computeWacc(p: DcfParams) {
   }
   const betaL = p.betaUnlevered * (1 + (1 - p.taxShieldRate) * p.targetDtoE);
   const ke = p.rfRate + betaL * p.erp;
-  const eOverV = 1 / (1 + p.targetDtoE);
-  const dOverV = p.targetDtoE / (1 + p.targetDtoE);
+  const eOverV = 1 / (1 + (p.targetDtoE || 0));
+  const dOverV = (p.targetDtoE || 0) / (1 + (p.targetDtoE || 0));
   // taxShieldRate = 0 for pure Saudi companies: no interest deductibility against Zakat
   const wacc = eOverV * ke + dOverV * p.kdPreTax * (1 - p.taxShieldRate);
   return { wacc, ke, betaL };
@@ -103,12 +110,12 @@ export function computeTerminalValue(lastY: DcfYear, wacc: number, p: DcfParams)
   if (p.terminalMethod === 'GORDON') {
     const g = p.terminalGrowth || 0;
     if (wacc <= g) {
-      throw new Error(`WACC (${(wacc * 100).toFixed(2)}%) must be > terminal growth (${(g * 100).toFixed(2)}%)`);
+      throw new InsufficientDataError(`WACC (${(wacc * 100).toFixed(2)}%) must be > terminal growth (${(g * 100).toFixed(2)}%)`);
     }
     return ((lastY.fcff ?? 0) * (1 + g)) / (wacc - g);
   }
   if (!p.exitMultiple || !p.exitMultipleEbitda) {
-    throw new Error('exitMultiple and exitMultipleEbitda required for Exit Multiple method');
+    throw new InsufficientDataError('exitMultiple and exitMultipleEbitda required for Exit Multiple method');
   }
   return p.exitMultiple * p.exitMultipleEbitda;
 }
@@ -124,11 +131,15 @@ export function bridgeEvToEquity(b: EvBridge) {
     (b.includeLeasesInDebt !== false ? b.leaseFinancingLiabilities : 0) +
     (b.includeEosbInDebt !== false ? b.eosbLiability : 0) +
     b.otherDebtLike;
-  const netDebt = totalDebt - b.cash;
-  const equityValue = b.enterpriseValue - netDebt - b.minorityInterest + b.nonOperatingAssets;
-  const impliedPx = b.sharesOutstanding > 0 ? equityValue / b.sharesOutstanding : 0;
+  const netDebt = totalDebt - (b.cash || 0);
+  const equityValue = (b.enterpriseValue || 0) - netDebt - (b.minorityInterest || 0) + (b.nonOperatingAssets || 0);
+  
+  if (!b.sharesOutstanding || b.sharesOutstanding === 0) {
+    throw new InsufficientDataError("Shares outstanding is zero or missing, cannot calculate implied share price.");
+  }
+  const impliedPx = equityValue / b.sharesOutstanding;
   const upsidePct = b.currentPrice ? (impliedPx / b.currentPrice - 1) * 100 : null;
-  return { cash: b.cash, totalDebt, netDebt, equityValue, impliedSharePrice: impliedPx, upsidePct };
+  return { cash: b.cash || 0, totalDebt, netDebt, equityValue, impliedSharePrice: impliedPx, upsidePct };
 }
 
 /**
@@ -179,6 +190,10 @@ export function buildSensitivityTable(years: DcfYear[], p: DcfParams, bridge: Ev
  * Main DCF entry point
  */
 export function runDcf(rawYears: DcfYear[], p: DcfParams, bridge: EvBridge) {
+  if (!rawYears || rawYears.length === 0) {
+    throw new InsufficientDataError("No projected years provided for DCF.");
+  }
+
   const { wacc, ke, betaL } = computeWacc(p);
   const projected = projectFcff(rawYears, p);
   const { years: discounted, pvSum } = discountFcff(projected, wacc);

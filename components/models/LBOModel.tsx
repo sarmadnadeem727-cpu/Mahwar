@@ -6,8 +6,7 @@ import { Briefcase, CreditCard, DollarSign, Calculator, ArrowRightLeft, ChevronR
 import { runLbo, DebtTranche, LboYearInput } from "@/lib/finance/lbo";
 import { fmt } from "@/lib/fmt";
 import { useTerminalStore } from "@/store/useTerminalStore";
-import { useQuery } from "@tanstack/react-query";
-import { fetchInstitutionalData } from "@/lib/services/terminalService";
+import { useMarketData } from "@/hooks/useMarketData";
 import { useFX } from "@/hooks/useFX";
 
 const DEFAULT_TRANCHES: DebtTranche[] = [
@@ -25,15 +24,11 @@ const DEFAULT_YEARS_LBO: LboYearInput[] = [
 ];
 
 export function LBOModel() {
-  const { selectedTicker, currency } = useTerminalStore();
+  const { activeTicker, currency } = useTerminalStore();
   const { convert } = useFX();
   const [tranches, setTranches] = useState<DebtTranche[]>(DEFAULT_TRANCHES);
   
-  const { data: globalData, isLoading: fetchLoading } = useQuery({
-    queryKey: ['financialData', selectedTicker],
-    queryFn: () => fetchInstitutionalData(selectedTicker),
-    staleTime: 5 * 60 * 1000,
-  });
+  const { data: globalData, isLoading: fetchLoading } = useMarketData(activeTicker);
 
   const [modelState, setModelState] = useState({
     years: DEFAULT_YEARS_LBO,
@@ -68,7 +63,7 @@ export function LBOModel() {
           <div>
             <h1 className="font-mono text-2xl font-bold uppercase tracking-tighter text-[#F8FAFC]">Sovereign LBO Engine</h1>
             <p className="text-[#64748B] text-[10px] font-mono tracking-widest uppercase">
-              {selectedTicker.replace(".SR", "")} • {currency} • TRANSACTION_LEVERAGE_SIMULATOR
+              {activeTicker?.replace(".SR", "") || "---"} • {currency} • TRANSACTION_LEVERAGE_SIMULATOR
             </p>
           </div>
         </div>
