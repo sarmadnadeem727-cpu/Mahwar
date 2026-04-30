@@ -21,8 +21,9 @@ export function ShariahScreening() {
     );
   }
 
-  const latestBS = (globalData.financials.balance[globalData.financials.latestYear] || {}) as any;
-  const mktCap = globalData.mktCap || 1000000000;
+  const financials = (globalData as any).financials || { balance: {}, latestYear: '2024' };
+  const latestBS = (financials.balance[financials.latestYear] || {}) as any;
+  const mktCap = globalData.quote?.marketCap || 1000000000;
   const totalDebt = Number(latestBS.totalDebt || 0);
   const debtRatio = (totalDebt / mktCap) * 100;
   const isShariahCompliant = debtRatio < 30;

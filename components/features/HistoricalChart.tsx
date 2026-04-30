@@ -13,7 +13,7 @@ export function HistoricalChart() {
   
   if (isLoading) {
     return (
-      <div className="col-span-12 lg:col-span-8 bg-zinc-950 border border-zinc-800 rounded-xl p-8 h-80 flex items-center justify-center relative overflow-hidden animate-pulse">
+      <div className="col-span-12 lg:col-span-8 bg-[#0a0a0a]/50 border border-white/10 rounded-xl p-8 h-80 flex items-center justify-center relative overflow-hidden animate-pulse backdrop-blur-xl">
         <div className="text-zinc-500 flex items-center gap-3">
            <div className="w-5 h-5 border-2 border-zinc-500 border-t-zinc-300 rounded-full animate-spin" />
            {isAr ? "جاري تحميل السجل التاريخي..." : "Loading price history..."}
@@ -24,7 +24,7 @@ export function HistoricalChart() {
   
   if (!globalData || !globalData.history || globalData.history.length === 0) {
     return (
-      <div className="col-span-12 lg:col-span-8 bg-zinc-950 border border-zinc-800 rounded-xl p-8 h-80 flex items-center justify-center">
+      <div className="col-span-12 lg:col-span-8 bg-[#0a0a0a]/50 border border-white/10 rounded-xl p-8 h-80 flex items-center justify-center backdrop-blur-xl">
         <div className="text-center">
           <p className="text-zinc-400 mb-2 font-bold">{isAr ? "لا توجد بيانات متاحة" : "No data available"}</p>
           <p className="text-xs text-zinc-600">{isAr ? "ابحث عن شركة لعرض الأداء" : "Search for a ticker to view price history"}</p>
@@ -46,12 +46,12 @@ export function HistoricalChart() {
   const changePerc = globalData.quote?.regularMarketChangePercent || 0;
 
   return (
-    <div className="col-span-12 lg:col-span-8 bg-zinc-950 border border-zinc-800 rounded-xl p-8 relative overflow-hidden transition-all hover:bg-zinc-900 group">
+    <div className="col-span-12 lg:col-span-8 bg-[#0a0a0a]/50 border border-white/10 rounded-xl p-8 relative overflow-hidden transition-all hover:bg-white/5 backdrop-blur-xl group">
       <div className="flex justify-between items-start mb-8 relative z-10" dir={isAr ? "rtl" : "ltr"}>
         <div>
-          <h2 className="text-xl font-serif font-bold text-zinc-100 mb-1 flex items-center gap-3">
+          <h2 className="text-xl font-serif font-bold text-zinc-50 mb-1 flex items-center gap-3">
              {isAr ? "الأداء التاريخي" : "Historical Performance"}
-             <div className="px-3 py-1 bg-zinc-800 border border-zinc-700 rounded-full text-[10px] text-zinc-300 font-mono uppercase tracking-widest font-bold">
+             <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] text-zinc-400 font-mono uppercase tracking-widest font-bold">
                  {isAr ? "مباشر 1س" : "1Y LIVE"}
              </div>
           </h2>
@@ -60,8 +60,8 @@ export function HistoricalChart() {
         
         <div className={`text-${isAr ? "left" : "right"}`}>
           <div className="text-[10px] text-zinc-500 mb-1 font-bold uppercase tracking-widest">{isAr ? "السعر الحالي" : "Current Quote"}</div>
-          <div className="text-2xl font-bold font-mono text-zinc-100 leading-none">{currentPrice.toFixed(2)}</div>
-          <div className={`text-xs font-mono font-bold mt-1 ${change >= 0 ? "text-emerald-500" : "text-red-500"}`}>
+          <div className="text-2xl font-bold font-mono text-zinc-50 leading-none">{currentPrice.toFixed(2)}</div>
+          <div className={`text-xs font-mono font-bold mt-1 ${change >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
             {change >= 0 ? "▲" : "▼"} {Math.abs(change).toFixed(2)} ({changePerc.toFixed(2)}%)
           </div>
         </div>
@@ -73,14 +73,14 @@ export function HistoricalChart() {
             <XAxis 
               dataKey="date" 
               stroke="#52525b" // zinc-600
-              tick={{ fill: "#a1a1aa", fontSize: 10, fontWeight: 600 }} // zinc-400
+              tick={{ fill: "#71717a", fontSize: 10, fontWeight: 500 }} // zinc-500
               tickLine={false}
               axisLine={false}
               minTickGap={30}
             />
             <YAxis 
               stroke="#52525b"
-              tick={{ fill: "#a1a1aa", fontSize: 10, fontWeight: 600 }}
+              tick={{ fill: "#71717a", fontSize: 10, fontWeight: 500 }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(val) => `${val.toFixed(0)}`}
@@ -90,25 +90,27 @@ export function HistoricalChart() {
             />
             <Tooltip 
               contentStyle={{
-                backgroundColor: "#18181b", // zinc-900
-                border: "1px solid #27272a", // zinc-800
-                borderRadius: "8px",
-                color: "#f4f4f5", // zinc-100
-                fontWeight: 600,
+                backgroundColor: "rgba(10, 10, 10, 0.9)", // deep matte background
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255, 255, 255, 0.1)", // subtle glassmorphism border
+                borderRadius: "12px",
+                color: "#fafafa", // zinc-50
+                fontWeight: 500,
                 fontSize: "12px",
-                fontFamily: "monospace"
+                fontFamily: "var(--font-mono, monospace)",
+                boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"
               }}
-              itemStyle={{ color: "#d4d4d8" }} // zinc-300
+              itemStyle={{ color: "#fafafa" }} // zinc-50
               formatter={(value: number) => [`${value.toFixed(2)}`, isAr ? "السعر" : "Close"]}
-              labelStyle={{ color: "#71717a", marginBottom: "4px" }} // zinc-500
+              labelStyle={{ color: "#a1a1aa", marginBottom: "4px" }} // zinc-400
             />
             <Line 
               type="monotone" 
               dataKey="price" 
-              stroke="#71717a" // zinc-500 muted professional color
-              strokeWidth={2}
+              stroke="#94a3b8" // slate-400 muted metallic silver
+              strokeWidth={2.5}
               dot={false}
-              activeDot={{ r: 5, fill: "#e4e4e7", stroke: "#18181b", strokeWidth: 2 }} // zinc-200 and zinc-900
+              activeDot={{ r: 5, fill: "#f8fafc", stroke: "#0f172a", strokeWidth: 2 }} // slate-50 and slate-900
             />
           </LineChart>
         </ResponsiveContainer>

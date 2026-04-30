@@ -8,8 +8,7 @@ import { useTerminalStore } from "@/store/useTerminalStore";
 import { useMarketData } from "@/hooks/useMarketData";
 import { exportFactbookToExcel, exportFactbookToPDF } from "@/lib/services/exportService";
 import { ModelButton } from "@/components/ui/ModelButton";
-import { FileText, CheckCircle2, AlertCircle, Calculator, Download, ChevronRight, BarChart3, Table as TableIcon } from "lucide-react";
-import { StatementCharts } from "./StatementCharts";
+import { FileText, CheckCircle2, AlertCircle, Calculator, Download, ChevronRight, Table as TableIcon } from "lucide-react";
 import { useFX } from "@/hooks/useFX";
 
 interface StatementRowProps {
@@ -24,25 +23,25 @@ function StatementRow({ label, values, isHeader, isTotal, indent }: StatementRow
   return (
     <tr
       className={`
-      border-b border-[#334155] transition-colors
-      ${isHeader ? "bg-[#1E293B] font-bold text-[#10B981] border-t border-[#334155]" : "hover:bg-[#1E293B]"} 
-      ${isTotal ? "font-bold bg-[#0F172A] border-t-[1px] border-[#10B981]/30" : ""}
+      border-b border-white/5 transition-colors
+      ${isHeader ? "bg-white/5 font-bold text-zinc-300 border-t border-white/10" : "hover:bg-white/5"} 
+      ${isTotal ? "font-bold bg-white/[0.02] border-t border-white/10" : ""}
     `}
     >
       <td
         className={`py-3 px-6 text-left flex items-center gap-3 ${
-          indent ? "pl-12 text-[#64748B] text-[11px] italic" : "text-[12px] font-sans text-[#F8FAFC] uppercase tracking-[0.05em] font-semibold"
+          indent ? "pl-12 text-zinc-500 text-[11px]" : "text-[11px] font-sans text-zinc-300 uppercase tracking-widest font-bold"
         }`}
       >
-        {!isHeader && !isTotal && !indent && <ChevronRight className="w-3 h-3 text-[#10B981]/40" />}
+        {!isHeader && !isTotal && !indent && <ChevronRight className="w-3 h-3 text-white/20" />}
         {label}
       </td>
       {values.map((v, i) => (
         <td
           key={i}
-          className={`py-3 px-6 text-right font-mono text-xs border-l border-[#334155] ${
-            typeof v === "number" && v < 0 ? "text-red-400" : "text-[#F8FAFC]"
-          }`}
+          className={`py-3 px-6 text-right font-mono text-xs border-l border-white/5 ${
+            typeof v === "number" && v < 0 ? "text-rose-400" : "text-zinc-50"
+          } ${isTotal ? 'font-bold' : ''}`}
         >
           {v}
         </td>
@@ -60,22 +59,21 @@ export function ThreeStatementModel() {
   const { data: globalData, isLoading: fetchLoading } = useMarketData(activeTicker);
 
   const [activeStatement, setActiveStatement] = useState<"IS" | "BS" | "CF">("IS");
-  const [viewMode, setViewMode] = useState<"table" | "charts">("table");
 
   const handleRunSync = useCallback(() => {
-    if (globalData && globalData.financials.statements.is) {
+    if (globalData && (globalData as any).financials?.statements?.is) {
       validate(
-        globalData.financials.statements.is,
-        globalData.financials.statements.bs,
-        globalData.financials.statements.cf,
-        globalData.financials.statements.prevBs
+        (globalData as any).financials.statements.is,
+        (globalData as any).financials.statements.bs,
+        (globalData as any).financials.statements.cf,
+        (globalData as any).financials.statements.prevBs
       );
     }
   }, [globalData, validate]);
 
-  const isData = (globalData?.financials.income || {}) as Record<string, any>;
-  const bsData = (globalData?.financials.balance || {}) as Record<string, any>;
-  const cfData = (globalData?.financials.cashflow || {}) as Record<string, any>;
+  const isData = ((globalData as any)?.financials?.income || {}) as Record<string, any>;
+  const bsData = ((globalData as any)?.financials?.balance || {}) as Record<string, any>;
+  const cfData = ((globalData as any)?.financials?.cashflow || {}) as Record<string, any>;
   const sortedYears = Object.keys(isData).sort().reverse().slice(0, 4);
   const displayYears = sortedYears.map(y => y.split("-")[0] + "A");
 
@@ -119,18 +117,19 @@ export function ThreeStatementModel() {
 
   return (
     <motion.div
-      className="flex flex-col gap-8 text-[#F8FAFC]"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      className="flex flex-col gap-8 text-zinc-300"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
     >
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#0F172A] border border-[#334155] p-8">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#0a0a0a]/50 backdrop-blur-xl border border-white/10 p-8 rounded-xl shadow-2xl">
         <div className="flex items-center gap-6">
-          <div className="w-12 h-12 bg-[#1E293B] flex items-center justify-center border border-[#334155]">
-            <FileText className="text-[#10B981] w-6 h-6" />
+          <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
+            <FileText className="text-zinc-50 w-5 h-5" />
           </div>
           <div>
-            <h1 className="font-mono text-2xl font-bold uppercase tracking-tighter">Institutional Terminal Mode</h1>
-            <p className="text-[#64748B] text-[10px] font-mono tracking-widest uppercase">
+            <h1 className="font-mono text-xl font-bold uppercase tracking-widest text-zinc-50">Institutional Terminal Mode</h1>
+            <p className="text-zinc-500 text-[10px] font-mono tracking-widest uppercase mt-1">
               {activeTicker?.replace(".SR", "") || "---"} • {currency} • REGIONAL_AUDIT_ENABLED
             </p>
           </div>
@@ -145,18 +144,18 @@ export function ThreeStatementModel() {
             <button
               key={s.id}
               onClick={() => setActiveStatement(s.id as any)}
-              className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest border transition-all ${
-                activeStatement === s.id ? "bg-[#10B981] border-[#10B981] text-[#020617]" : "border-[#334155] text-[#94A3B8] hover:border-[#10B981]"
+              className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest border transition-all rounded-md ${
+                activeStatement === s.id ? "bg-zinc-100 border-zinc-100 text-zinc-950" : "border-white/10 bg-white/5 text-zinc-400 hover:text-zinc-50 hover:bg-white/10"
               }`}
             >
               {s.label}
             </button>
           ))}
-          <div className="w-[1px] h-6 bg-[#334155] mx-2" />
+          <div className="w-[1px] h-6 bg-white/10 mx-2" />
           <button 
             onClick={() => setIsCommonSize(!isCommonSize)}
-            className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest border transition-all ${
-              isCommonSize ? "bg-[#F59E0B] border-[#F59E0B] text-[#020617]" : "border-[#334155] text-[#94A3B8]"
+            className={`px-4 py-2 text-[10px] font-bold uppercase tracking-widest border transition-all rounded-md mr-2 ${
+              isCommonSize ? "bg-zinc-100 border-zinc-100 text-zinc-950" : "border-white/10 bg-white/5 text-zinc-400 hover:text-zinc-50 hover:bg-white/10"
             }`}
           >
             Common Size (%)
@@ -167,13 +166,13 @@ export function ThreeStatementModel() {
 
       <div className="grid grid-cols-12 gap-8">
         <section className="col-span-12 xl:col-span-9">
-          <div className="bg-[#0F172A] border border-[#334155] overflow-hidden">
-            <table className="terminal-table">
+          <div className="bg-[#0a0a0a]/50 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+            <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr>
-                  <th className="w-1/3">Line_Item ({currency}m)</th>
+                <tr className="bg-white/5 border-b border-white/10">
+                  <th className="py-4 px-6 font-bold uppercase tracking-widest text-zinc-500 text-[10px] w-1/3">Line_Item ({currency}m)</th>
                   {displayYears.map((y) => (
-                    <th key={y} className="text-right">{y}</th>
+                    <th key={y} className="py-4 px-6 text-right font-bold uppercase tracking-widest text-zinc-500 text-[10px]">{y}</th>
                   ))}
                 </tr>
               </thead>
@@ -217,49 +216,49 @@ export function ThreeStatementModel() {
         </section>
 
         <aside className="col-span-12 xl:col-span-3 space-y-6">
-          <div className="bg-[#0F172A] border border-[#334155] p-6">
-            <h3 className="text-[10px] font-bold text-[#64748B] uppercase tracking-[0.4em] mb-6 flex items-center gap-3">
-              <Calculator className="w-4 h-4 text-[#10B981]" />
+          <div className="bg-[#0a0a0a]/50 backdrop-blur-xl border border-white/10 p-6 rounded-xl shadow-xl">
+            <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-3">
+              <Calculator className="w-4 h-4 text-zinc-400" />
               Regional Probe
             </h3>
             <div className="space-y-4">
               {validations.map((v, mIdx) => (
-                <div key={mIdx} className={`p-4 border ${v.pass ? 'border-[#10B981]/20 bg-[#10B981]/5' : 'border-red-500/20 bg-red-500/5'}`}>
-                  <div className="flex items-center gap-2 mb-1">
-                    {v.pass ? <CheckCircle2 className="w-4 text-[#10B981]" /> : <AlertCircle className="w-4 text-red-500" />}
-                    <p className={`text-[10px] font-bold uppercase ${v.pass ? 'text-[#10B981]' : 'text-red-500'}`}>{v.test}</p>
+                <div key={mIdx} className={`p-4 border rounded-lg ${v.pass ? 'border-zinc-500/20 bg-zinc-500/5' : 'border-rose-500/20 bg-rose-500/5'}`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    {v.pass ? <CheckCircle2 className="w-4 text-zinc-300" /> : <AlertCircle className="w-4 text-rose-500" />}
+                    <p className={`text-[10px] font-bold uppercase tracking-wider ${v.pass ? 'text-zinc-300' : 'text-rose-500'}`}>{v.test}</p>
                   </div>
-                  <p className="text-[10px] font-mono text-[#94A3B8]">{v.message}</p>
+                  <p className="text-[10px] font-mono text-zinc-500">{v.message}</p>
                 </div>
               ))}
               
-              <div className="bg-[#1E293B] p-4 border border-[#334155]">
-                <h4 className="text-[9px] font-bold uppercase text-[#F8FAFC] mb-2 tracking-widest">Internal ZATCA Probe</h4>
+              <div className="bg-white/5 p-4 border border-white/10 rounded-lg">
+                <h4 className="text-[9px] font-bold uppercase text-zinc-300 mb-3 tracking-widest">Internal ZATCA Probe</h4>
                 <div className="flex justify-between items-end">
                    <div>
-                     <p className="text-[10px] font-mono text-[#64748B]">Base: {fmt.accounting(convert(zakatBase, 'SAR'))}</p>
-                     <p className="text-[10px] font-mono text-[#10B981] font-bold">Zakat: {fmt.accounting(convert(zakatZatca, 'SAR'))}</p>
+                     <p className="text-[10px] font-mono text-zinc-500 mb-1">Base: {fmt.accounting(convert(zakatBase, 'SAR'))}</p>
+                     <p className="text-[10px] font-mono text-zinc-50 font-bold">Zakat: {fmt.accounting(convert(zakatZatca, 'SAR'))}</p>
                    </div>
-                   <div className="text-[8px] bg-[#10B981] text-[#020617] px-1 font-bold">AAOIFI_V2</div>
+                   <div className="text-[8px] border border-white/10 bg-white/5 text-zinc-400 px-2 py-0.5 rounded font-bold uppercase">AAOIFI_V2</div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="bg-[#0F172A] border border-[#334155] p-6">
-            <button onClick={() => globalData && exportFactbookToPDF(globalData, sortedYears)} className="w-full flex items-center justify-between text-[#F8FAFC] p-3 hover:bg-[#1E293B] border border-transparent hover:border-[#334155] transition-all mb-2">
+          <div className="bg-[#0a0a0a]/50 backdrop-blur-xl border border-white/10 p-6 rounded-xl shadow-xl flex flex-col gap-3">
+            <button onClick={() => globalData && exportFactbookToPDF(globalData as any, sortedYears)} className="w-full flex items-center justify-between text-zinc-300 p-4 hover:bg-white/5 border border-white/10 rounded-lg transition-all group">
               <div className="flex items-center gap-3">
-                <Download className="w-4 h-4 text-[#F59E0B]" />
+                <Download className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
                 <span className="text-[10px] font-bold uppercase tracking-widest">Generate Factbook</span>
               </div>
-              <ChevronRight className="w-3 h-3" />
+              <ChevronRight className="w-3 h-3 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
             </button>
-            <button onClick={() => globalData && exportFactbookToExcel(activeTicker, isData)} className="w-full flex items-center justify-between text-[#F8FAFC] p-3 hover:bg-[#1E293B] border border-transparent hover:border-[#334155] transition-all">
+            <button onClick={() => globalData && exportFactbookToExcel(activeTicker ?? "N/A", isData)} className="w-full flex items-center justify-between text-zinc-300 p-4 hover:bg-white/5 border border-white/10 rounded-lg transition-all group">
               <div className="flex items-center gap-3">
-                <TableIcon className="w-4 h-4 text-[#10B981]" />
+                <TableIcon className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
                 <span className="text-[10px] font-bold uppercase tracking-widest">Excel Formula Export</span>
               </div>
-              <ChevronRight className="w-3 h-3" />
+              <ChevronRight className="w-3 h-3 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
             </button>
           </div>
         </aside>

@@ -8,7 +8,6 @@ interface TerminalState {
   isLoading: boolean;
   globalError: string | null;
   
-  // Legacy fields to avoid breaking TickerSearch UI translation logic
   language: Language;
   currency: Currency;
 
@@ -21,7 +20,7 @@ interface TerminalState {
 }
 
 export const useTerminalStore = create<TerminalState>((set) => ({
-  activeTicker: "2222.SR", // Defaulting to Aramco for initial view
+  activeTicker: "AAPL", // Default ticker
   isLoading: false,
   globalError: null,
   
@@ -33,8 +32,7 @@ export const useTerminalStore = create<TerminalState>((set) => ({
       set({ activeTicker: null });
       return;
     }
-    // Standardize to Saudi Stock Exchange if no suffix and it looks like a Tadawul ticker
-    const formatted = (/^\d{4}$/.test(ticker) && !ticker.endsWith(".SR")) ? `${ticker}.SR` : ticker;
+    const formatted = ticker.toUpperCase().trim();
     set({ activeTicker: formatted, globalError: null });
   },
   setLoading: (isLoading) => set({ isLoading }),

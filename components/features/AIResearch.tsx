@@ -3,7 +3,7 @@
 import React, { useState, useRef } from "react";
 import { useTerminalStore } from "@/store/useTerminalStore";
 import { useMarketData } from "@/hooks/useMarketData";
-import { LoadingScreen } from "@/components/ui/LoadingScreen";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 import ReactMarkdown from "react-markdown";
 
 export function AIResearch() {

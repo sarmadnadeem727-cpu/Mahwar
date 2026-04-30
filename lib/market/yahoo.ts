@@ -42,7 +42,7 @@ export async function getHistoricalData(ticker: string, period1: string | Date =
 export async function getFundamentals(ticker: string) {
   try {
     const symbol = formatTicker(ticker);
-    const result = await yahooFinance.quoteSummary(symbol, {
+    const result = (await yahooFinance.quoteSummary(symbol, {
       modules: [
         'incomeStatementHistory',
         'balanceSheetHistory',
@@ -50,7 +50,7 @@ export async function getFundamentals(ticker: string) {
         'financialData',
         'defaultKeyStatistics'
       ],
-    });
+    })) as any;
 
     return {
       incomeStatement: result.incomeStatementHistory?.incomeStatementHistory || [],

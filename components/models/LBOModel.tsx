@@ -51,85 +51,86 @@ export function LBOModel() {
 
   return (
     <motion.div 
-      className="flex flex-col gap-8 text-[#F8FAFC]"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+      className="flex flex-col gap-8 text-zinc-300"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
     >
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#0F172A] border border-[#334155] p-8">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-[#0a0a0a]/50 backdrop-blur-xl border border-white/10 p-8 rounded-xl shadow-2xl">
         <div className="flex items-center gap-6">
-          <div className="w-12 h-12 bg-[#1E293B] flex items-center justify-center border border-[#334155]">
-            <Briefcase className="text-[#10B981] w-6 h-6" />
+          <div className="w-12 h-12 bg-white/5 flex items-center justify-center border border-white/10 rounded-lg">
+            <Briefcase className="text-zinc-50 w-5 h-5" />
           </div>
           <div>
-            <h1 className="font-mono text-2xl font-bold uppercase tracking-tighter text-[#F8FAFC]">Sovereign LBO Engine</h1>
-            <p className="text-[#64748B] text-[10px] font-mono tracking-widest uppercase">
+            <h1 className="font-mono text-xl font-bold uppercase tracking-widest text-zinc-50">Sovereign LBO Engine</h1>
+            <p className="text-zinc-500 text-[10px] font-mono tracking-widest uppercase mt-1">
               {activeTicker?.replace(".SR", "") || "---"} • {currency} • TRANSACTION_LEVERAGE_SIMULATOR
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-12 bg-[#1E293B] p-6 border border-[#334155]">
+        <div className="flex items-center gap-12 bg-white/5 p-6 border border-white/10 rounded-xl">
           <div className="text-right">
-            <div className="text-[9px] text-[#64748B] uppercase tracking-[0.2em] mb-1 font-bold">Entry Leverage</div>
-            <div className="text-3xl font-mono font-bold text-[#F8FAFC] tracking-tighter">{result.sourcesUses.entryLeverage.toFixed(1)}x</div>
+            <div className="text-[9px] text-zinc-500 uppercase tracking-[0.2em] mb-1 font-bold">Entry Leverage</div>
+            <div className="text-3xl font-mono font-bold text-zinc-50 tracking-tighter">{result.sourcesUses.entryLeverage.toFixed(1)}x</div>
           </div>
-          <div className="w-[1px] h-10 bg-[#334155]" />
+          <div className="w-[1px] h-10 bg-white/10" />
           <div className="text-right">
-            <div className="text-[9px] text-[#64748B] uppercase tracking-[0.2em] mb-1 font-bold">Projected IRR</div>
-            <div className="text-3xl font-mono font-bold text-[#10B981] tracking-tighter">{result.irr}%</div>
+            <div className="text-[9px] text-zinc-500 uppercase tracking-[0.2em] mb-1 font-bold">Projected IRR</div>
+            <div className="text-3xl font-mono font-bold text-zinc-50 tracking-tighter">{result.irr}%</div>
           </div>
         </div>
       </header>
 
       <div className="grid grid-cols-12 gap-8">
         <aside className="col-span-12 xl:col-span-4 space-y-6">
-          <div className="bg-[#0F172A] border border-[#334155] p-6">
-            <h3 className="text-[10px] font-bold text-[#64748B] uppercase tracking-[0.4em] mb-8 flex items-center gap-3">
-              <Calculator className="w-4 h-4 text-[#F59E0B]" />
+          <div className="bg-[#0a0a0a]/50 backdrop-blur-xl border border-white/10 p-6 rounded-xl shadow-xl">
+            <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-8 flex items-center gap-3">
+              <Calculator className="w-4 h-4 text-zinc-400" />
               Deal Architecture
             </h3>
             <div className="space-y-6">
-                <div className="flex justify-between border-b border-[#334155] pb-3">
-                   <span className="text-[9px] text-[#F8FAFC] font-bold uppercase">Entry EV</span>
-                   <span className="font-mono text-xs text-[#F8FAFC]">{fmt.accounting(convert(result.sourcesUses.entryEv, 'SAR'))}</span>
+                <div className="flex justify-between border-b border-white/10 pb-3">
+                   <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">Entry EV</span>
+                   <span className="font-mono text-xs text-zinc-50">{fmt.accounting(convert(result.sourcesUses.entryEv, 'SAR'))}</span>
                 </div>
-                <div className="flex justify-between border-b border-[#334155] pb-3">
-                   <span className="text-[9px] text-[#94A3B8] font-bold uppercase">Equity Check</span>
-                   <span className="font-mono text-xs text-[#10B981]">{fmt.accounting(convert(result.sourcesUses.equityCheck, 'SAR'))}</span>
+                <div className="flex justify-between border-b border-white/10 pb-3">
+                   <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-wider">Equity Check</span>
+                   <span className="font-mono text-xs text-zinc-50">{fmt.accounting(convert(result.sourcesUses.equityCheck, 'SAR'))}</span>
                 </div>
                 <div className="pt-4">
-                   <label className="text-[10px] font-bold text-[#64748B] uppercase block mb-3">Exit Multiple: <span className="text-[#10B981]">{modelState.exitMultiple}x</span></label>
+                   <label className="text-[10px] font-bold text-zinc-500 uppercase block mb-3">Exit Multiple: <span className="text-zinc-50">{modelState.exitMultiple}x</span></label>
                    <input type="range" min="5" max="15" step="0.5" value={modelState.exitMultiple} 
                      onChange={(e) => setModelState(prev => ({ ...prev, exitMultiple: parseFloat(e.target.value) }))}
-                     className="w-full h-1 bg-[#334155] rounded-none appearance-none cursor-pointer accent-[#10B981]"
+                     className="w-full h-1 bg-white/10 rounded-none appearance-none cursor-pointer accent-zinc-400"
                    />
                 </div>
             </div>
           </div>
 
-          <div className="bg-[#0F172A] border border-[#334155] p-6">
-             <h3 className="text-[10px] font-bold text-[#64748B] uppercase tracking-[0.4em] mb-6 flex items-center gap-3">
-              <CreditCard className="w-4 h-4 text-[#10B981]" />
+          <div className="bg-[#0a0a0a]/50 backdrop-blur-xl border border-white/10 p-6 rounded-xl shadow-xl">
+             <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-6 flex items-center gap-3">
+              <CreditCard className="w-4 h-4 text-zinc-400" />
               Debt Tranches
             </h3>
             <div className="space-y-3">
                {tranches.map((t, i) => (
-                 <div key={i} className="p-4 bg-[#1E293B] border border-[#334155]">
-                    <div className="flex justify-between mb-3">
-                       <span className="text-[10px] font-bold uppercase text-[#F8FAFC]">{t.name}</span>
-                       <span className="text-[8px] bg-[#334155] px-1 text-[#94A3B8]">{t.type}</span>
+                 <div key={i} className="p-4 bg-white/5 border border-white/10 rounded-lg">
+                    <div className="flex justify-between mb-3 items-center">
+                       <span className="text-[10px] font-bold uppercase text-zinc-50 tracking-wider">{t.name}</span>
+                       <span className="text-[8px] border border-white/10 bg-white/5 px-2 py-0.5 rounded text-zinc-400">{t.type}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                        <div>
-                          <label className="text-[8px] uppercase text-[#64748B] block mb-1">Commitment ({currency})</label>
+                          <label className="text-[8px] uppercase tracking-wider text-zinc-500 block mb-1">Commitment ({currency})</label>
                           <input type="number" value={t.commitment} onChange={e => updateTranche(i, 'commitment', parseFloat(e.target.value) || 0)}
-                            className="w-full bg-[#0F172A] border border-[#334155] text-xs font-mono p-1 text-[#F8FAFC]"
+                            className="w-full bg-[#0a0a0a] border border-white/10 text-xs font-mono p-1.5 text-zinc-50 rounded outline-none focus:border-zinc-500 transition-colors"
                           />
                        </div>
                        <div>
-                          <label className="text-[8px] uppercase text-[#64748B] block mb-1">Spread (bps)</label>
+                          <label className="text-[8px] uppercase tracking-wider text-zinc-500 block mb-1">Spread (bps)</label>
                           <input type="number" value={t.spreadBps} onChange={e => updateTranche(i, 'spreadBps', parseFloat(e.target.value) || 0)}
-                            className="w-full bg-[#0F172A] border border-[#334155] text-xs font-mono p-1 text-[#F8FAFC]"
+                            className="w-full bg-[#0a0a0a] border border-white/10 text-xs font-mono p-1.5 text-zinc-50 rounded outline-none focus:border-zinc-500 transition-colors"
                           />
                        </div>
                     </div>
@@ -140,15 +141,15 @@ export function LBOModel() {
         </aside>
 
         <main className="col-span-12 xl:col-span-8 space-y-8">
-           <div className="bg-[#0F172A] border border-[#334155] overflow-hidden">
-             <table className="terminal-table">
+           <div className="bg-[#0a0a0a]/50 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-2xl">
+             <table className="w-full text-left text-xs border-collapse">
                <thead>
-                 <tr>
-                    <th className="w-1/3">Debt Service Schedule</th>
-                    {result.years.map(y => <th key={y.year} className="text-right">FY {y.year}E</th>)}
+                 <tr className="bg-white/5 border-b border-white/10">
+                    <th className="py-4 px-6 font-bold uppercase tracking-widest text-zinc-500 text-[10px] w-1/3">Debt Service Schedule</th>
+                    {result.years.map(y => <th key={y.year} className="py-4 px-6 text-right font-bold uppercase tracking-widest text-zinc-500 text-[10px]">FY {y.year}E</th>)}
                  </tr>
                </thead>
-               <tbody>
+               <tbody className="divide-y divide-white/5">
                   <TableRow label="EBITDA" values={result.years.map(y => fmt.accounting(convert(y.ebitda, 'SAR')))} />
                   <TableRow label="CFADS" values={result.years.map(y => fmt.accounting(convert(y.cfads, 'SAR')))} isSub />
                   <TableRow label="Mandatory Amortization" values={result.years.map(y => `(${fmt.accounting(convert(y.totA, 'SAR'))})`)} isSub />
@@ -158,22 +159,22 @@ export function LBOModel() {
              </table>
            </div>
 
-           <div className="bg-[#0F172A] border border-[#334155] p-8">
-               <h3 className="text-[10px] font-bold text-[#64748B] uppercase tracking-[0.4em] mb-8">Returns Sensitivity (IRR %)</h3>
-               <div className="overflow-x-auto">
+           <div className="bg-[#0a0a0a]/50 backdrop-blur-xl border border-white/10 p-8 rounded-xl shadow-2xl">
+               <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-8">Returns Sensitivity (IRR %)</h3>
+               <div className="overflow-x-auto rounded-lg border border-white/10">
                  <table className="w-full text-center border-collapse text-[10px] font-mono">
                     <thead>
-                      <tr className="bg-[#1E293B]">
-                        <th className="p-3 border border-[#334155] text-left text-[#94A3B8]">Year \ Exit Mult</th>
-                        {result.exitMultipleRange.map(m => <th key={m} className="p-3 border border-[#334155] text-[#F8FAFC]">{m}x</th>)}
+                      <tr className="bg-white/5 border-b border-white/10">
+                        <th className="p-4 border-r border-white/10 text-left text-zinc-500 uppercase tracking-widest">Year \ Exit Mult</th>
+                        {result.exitMultipleRange.map(m => <th key={m} className="p-4 border-r last:border-0 border-white/10 text-zinc-300">{m}x</th>)}
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-white/5">
                        {result.returnsSensitivity.map((row, ri) => (
-                         <tr key={ri} className="hover:bg-[#1E293B]">
-                            <td className="p-3 border border-[#334155] font-bold text-[#94A3B8] text-left">Yr {row.exitYear}</td>
+                         <tr key={ri} className="hover:bg-white/5 transition-colors">
+                            <td className="p-4 border-r border-white/10 font-bold text-zinc-400 text-left">Yr {row.exitYear}</td>
                             {row.irrs.map((irr, ci) => (
-                              <td key={ci} className={`p-3 border border-[#334155] ${irr > 20 ? 'text-[#10B981]' : 'text-red-400'}`}>
+                              <td key={ci} className={`p-4 border-r last:border-0 border-white/10 font-bold ${irr > 20 ? 'text-zinc-50' : 'text-zinc-500'}`}>
                                 {irr}%
                               </td>
                             ))}
@@ -191,13 +192,13 @@ export function LBOModel() {
 
 function TableRow({ label, values, isSub, isTotal }: any) {
   return (
-    <tr className={`border-b border-[#334155] transition-colors hover:bg-[#1E293B] ${isTotal ? 'bg-[#1E293B]/50' : ''}`}>
-      <td className={`py-4 px-6 text-left ${isSub ? 'pl-10 text-[11px] text-[#64748B] italic' : 'text-[12px] font-bold uppercase text-[#F8FAFC]'} ${isTotal ? 'text-[#10B981]' : ''}`}>
-        {isSub && <span className="mr-2">└</span>}
+    <tr className={`transition-colors hover:bg-white/5 ${isTotal ? 'bg-white/5' : ''}`}>
+      <td className={`py-4 px-6 text-left ${isSub ? 'pl-10 text-[11px] text-zinc-500' : 'text-[11px] font-bold uppercase tracking-wider text-zinc-300'} ${isTotal ? 'text-zinc-50' : ''}`}>
+        {isSub && <span className="mr-2 text-white/20">└</span>}
         {label}
       </td>
       {values.map((v: any, i: number) => (
-        <td key={i} className={`py-4 px-6 text-right font-mono text-xs border-l border-[#334155] ${isTotal ? 'font-bold' : ''}`}>
+        <td key={i} className={`py-4 px-6 text-right font-mono text-xs border-l border-white/5 ${isTotal ? 'font-bold text-zinc-50' : 'text-zinc-400'}`}>
           {v}
         </td>
       ))}

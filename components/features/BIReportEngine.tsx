@@ -13,16 +13,19 @@ import {
   LabelList
 } from "recharts";
 import { useTerminalStore } from "@/store/useTerminalStore";
+import { useMarketData } from "@/hooks/useMarketData";
 import { useFX } from "@/hooks/useFX";
 import { fmt } from "@/lib/fmt";
 import { Calculator, BarChart3, TrendingUp, ShieldCheck } from "lucide-react";
 
 export function BIReportEngine() {
-  const { data } = useTerminalStore();
+  const { activeTicker } = useTerminalStore();
+  const { data: globalData } = useMarketData(activeTicker);
   const { convert, currency } = useFX();
   const [showCommonSize, setShowCommonSize] = useState(false);
 
-  if (!data) return null;
+  const data = globalData as any;
+  if (!data || !data.financials) return null;
 
   const is = data.financials.statements.is;
   
